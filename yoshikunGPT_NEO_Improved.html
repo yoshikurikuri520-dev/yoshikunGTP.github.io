@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#ff7eb6">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<meta name="apple-mobile-web-app-title" content="よしくんGPT">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>よしくんGPT NEO</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<!-- 背景 -->
+
+<!-- アプリ -->
+
+<div id="app">
+
+<!-- ヘッダー -->
+
+<header>
+
+<div class="left">
+
+<div class="avatar">
+🐱
+</div>
+
+<div>
+
+<h1>よしくんGPT NEO</h1>
+
+<p id="status">
+● よしくんとオンライン
+</p>
+
+</div>
+
+</div>
+
+<div class="right">
+
+<button id="darkBtn">
+
+🌙
+
+</button>
+
+<button id="menuBtn">
+
+☰
+
+</button>
+
+</div>
+
+</header>
+
+<!-- メニュー -->
+
+<nav id="menu">
+
+<button id="clearHistory">
+
+🗑 証拠隠滅
+
+</button>
+
+<button id="exportHistory">
+
+💾 履歴保存
+
+</button>
+
+<button id="importHistory">
+
+📂 履歴読込
+
+</button>
+
+<button id="speechBtn">
+
+🔊 読み上げ
+
+</button>
+
+<button id="voiceBtn">
+
+🎤 音声入力
+
+</button>
+
+</nav>
+
+<!-- チャット -->
+
+<main id="chat">
+
+</main>
+
+<!-- 入力中 -->
+
+<div id="typing">
+
+<span></span>
+
+<span></span>
+
+<span></span>
+
+</div>
+
+<!-- クイック質問 -->
+
+<div id="quickArea">
+
+<button>こんにちは</button>
+
+<button>ゲーム</button>
+
+<button>ラーメン</button>
+
+<button>学校</button>
+
+<button>AI</button>
+
+<button>猫</button>
+
+<button>面白い話</button>
+
+<button>占い</button>
+
+</div>
+
+<!-- 入力欄 -->
+
+<footer>
+
+<input
+
+id="input"
+
+type="text"
+
+placeholder="メッセージを入力"
+
+autocomplete="off"
+
+>
+
+<button id="send">
+
+送信
+
+</button>
+
+</footer>
+
+</div>
+
+<!-- テンプレート -->
+
+<template id="userTemplate">
+
+<div class="message user">
+
+<div class="icon">
+
+😊
+
+</div>
+
+<div class="bubble">
+
+<span class="text"></span>
+
+</div>
+
+</div>
+
+</template>
+
+<template id="botTemplate">
+
+<div class="message bot">
+
+<div class="icon">
+
+🐱
+
+</div>
+
+<div class="bubble">
+
+<span class="text"></span>
+
+</div>
+
+</div>
+
+</template>
+
+<!-- JS -->
+
+<script src="knowledge.js"></script>
+
+<script src="storage.js"></script>
+
+<script src="effects.js"></script>
+
+<script src="speech.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+
+<script>
+if("serviceWorker" in navigator){
+
+navigator.serviceWorker.register("sw.js");
+
+}
+</script>
+
+</html>
