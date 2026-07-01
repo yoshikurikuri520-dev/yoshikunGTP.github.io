@@ -1,0 +1,12304 @@
+/**
+ * よしくんGPT NEO
+ * bootstrap.js
+ *
+ * アプリ起動管理システム
+ */
+
+
+"use strict";
+
+
+
+
+
+/*
+==================================
+ システム状態
+==================================
+*/
+
+
+const YOSHIKUN_BOOT = {
+
+
+    started:false,
+
+
+    loaded:{},
+
+
+    errors:[],
+
+
+    startTime:null
+
+
+};
+
+
+
+
+
+
+
+
+/*
+==================================
+ 起動ログ
+==================================
+*/
+
+
+function bootLog(
+    message
+){
+
+
+    console.log(
+
+        "[YOSHIKUN BOOT]",
+
+        message
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 必須モジュール確認
+==================================
+*/
+
+
+function checkModules(){
+
+
+
+    const modules = {
+
+
+        config:
+
+            typeof YOSHIKUN_CONFIG
+            !==
+            "undefined",
+
+
+
+        knowledge:
+
+            typeof YoshikunAI
+            !==
+            "undefined",
+
+
+
+        storage:
+
+            typeof YoshikunStorage
+            !==
+            "undefined",
+
+
+
+        speech:
+
+            typeof YoshikunSpeech
+            !==
+            "undefined"
+
+
+    };
+
+
+
+
+
+    YOSHIKUN_BOOT.loaded =
+
+        modules;
+
+
+
+
+    return modules;
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ エラーチェック
+==================================
+*/
+
+
+function checkErrors(){
+
+
+
+    const modules =
+
+        YOSHIKUN_BOOT.loaded;
+
+
+
+
+    for(
+        const name
+        in
+        modules
+    ){
+
+
+        if(
+            !modules[name]
+        ){
+
+
+            YOSHIKUN_BOOT
+            .errors
+            .push(
+                name
+            );
+
+
+        }
+
+
+    }
+
+
+
+
+    return (
+
+        YOSHIKUN_BOOT
+        .errors
+        .length
+        ===
+        0
+
+    );
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ ブラウザ確認
+==================================
+*/
+
+
+function checkBrowser(){
+
+
+
+    const result = {
+
+
+        localStorage:
+
+            !!window.localStorage,
+
+
+
+        serviceWorker:
+
+            "serviceWorker"
+            in
+            navigator,
+
+
+
+        speech:
+
+            (
+                "speechSynthesis"
+                in
+                window
+            )
+
+    };
+
+
+
+    return result;
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 初期設定
+==================================
+*/
+
+
+function initializeSystem(){
+
+
+
+    bootLog(
+
+        "システム初期化開始"
+
+    );
+
+
+
+    YOSHIKUN_BOOT.startTime =
+
+        Date.now();
+
+
+
+
+
+    const modules =
+
+        checkModules();
+
+
+
+
+
+    const browser =
+
+        checkBrowser();
+
+
+
+
+
+    bootLog(
+
+        "Module Status"
+
+    );
+
+
+    console.table(
+        modules
+    );
+
+
+
+    bootLog(
+
+        "Browser Status"
+
+    );
+
+
+    console.table(
+        browser
+    );
+
+
+
+
+
+    if(
+        !checkErrors()
+    ){
+
+
+        console.warn(
+
+            "一部機能が利用できません",
+
+            YOSHIKUN_BOOT.errors
+
+        );
+
+
+    }
+
+
+
+
+
+
+
+    YOSHIKUN_BOOT.started =
+        true;
+
+
+
+    bootLog(
+
+        "初期化完了"
+
+    );
+
+
+}
+
+/**
+ * よしくんGPT NEO
+ * bootstrap.js Part2
+ *
+ * 完全起動システム
+ */
+
+
+
+
+
+/*
+==================================
+ JavaScript動的読み込み
+==================================
+*/
+
+
+function loadScript(
+    src
+){
+
+    return new Promise(
+
+        function(resolve,reject){
+
+
+
+            const script =
+
+                document
+                .createElement(
+                    "script"
+                );
+
+
+
+            script.src = src;
+
+
+
+            script.onload =
+
+                function(){
+
+
+                    bootLog(
+
+                        src +
+                        " 読み込み完了"
+
+                    );
+
+
+                    resolve();
+
+
+                };
+
+
+
+            script.onerror =
+
+                function(){
+
+
+                    YOSHIKUN_BOOT
+                    .errors
+                    .push(src);
+
+
+
+                    reject(
+
+                        src
+
+                    );
+
+
+                };
+
+
+
+            document
+            .head
+            .appendChild(
+                script
+            );
+
+
+        }
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 必須ファイル読み込み
+==================================
+*/
+
+
+async function loadCoreFiles(){
+
+
+
+    const files = [
+
+
+        "js/config.js",
+
+
+        "js/knowledge.js",
+
+
+        "js/storage.js",
+
+
+        "js/speech.js",
+
+
+        "js/app.js"
+
+
+    ];
+
+
+
+
+
+    for(
+        const file
+        of
+        files
+    ){
+
+
+
+        try{
+
+
+            await loadScript(
+                file
+            );
+
+
+
+        }catch(error){
+
+
+            console.error(
+
+                "読み込み失敗",
+
+                error
+
+            );
+
+
+        }
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 保存データ復旧
+==================================
+*/
+
+
+function restoreSystemData(){
+
+
+
+    if(
+        typeof YoshikunStorage
+        ===
+        "undefined"
+    ){
+
+        return;
+
+    }
+
+
+
+    const history =
+
+        YoshikunStorage
+        .getChat();
+
+
+
+    bootLog(
+
+        "履歴復元: "
+
+        +
+
+        history.length
+
+        +
+
+        "件"
+
+    );
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ AI初期化
+==================================
+*/
+
+
+function initializeAI(){
+
+
+
+    if(
+        typeof YoshikunAI
+        !==
+        "undefined"
+    ){
+
+
+        bootLog(
+
+            "AIエンジン準備完了"
+
+        );
+
+
+    }else{
+
+
+        console.warn(
+
+            "AIエンジン未検出"
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ グローバルAPI公開
+==================================
+*/
+
+
+function exposeAPI(){
+
+
+
+    window.YoshikunGPT = {
+
+
+        chat:function(
+            message
+        ){
+
+
+            return YoshikunAI
+            .ask(
+                message
+            );
+
+
+        },
+
+
+
+        speak:function(
+            text
+        ){
+
+
+            if(
+                typeof YoshikunSpeech
+                !==
+                "undefined"
+            ){
+
+
+                YoshikunSpeech
+                .speak(
+                    text
+                );
+
+
+            }
+
+
+        },
+
+
+
+        storage:
+
+            typeof YoshikunStorage
+            !==
+            "undefined"
+
+            ?
+
+            YoshikunStorage
+
+            :
+
+            null,
+
+
+
+        version:
+
+            YOSHIKUN_CONFIG
+            .app
+            .version
+
+
+    };
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 完全起動
+==================================
+*/
+
+
+async function boot(){
+
+
+
+    try{
+
+
+        bootLog(
+
+            "よしくんGPT NEO 起動開始"
+
+        );
+
+
+
+
+        await loadCoreFiles();
+
+
+
+
+
+        initializeSystem();
+
+
+
+
+
+        restoreSystemData();
+
+
+
+
+
+        initializeAI();
+
+
+
+
+
+        exposeAPI();
+
+
+
+
+
+        bootLog(
+
+            "🚀 よしくんGPT NEO 起動完了"
+
+        );
+
+
+
+
+
+    }catch(error){
+
+
+
+        console.error(
+
+            "Boot Error",
+
+            error
+
+        );
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 自動起動
+==================================
+*/
+
+
+if(
+    document.readyState
+    ===
+    "loading"
+){
+
+
+    document
+    .addEventListener(
+
+        "DOMContentLoaded",
+
+        boot
+
+    );
+
+
+}else{
+
+
+    boot();
+
+
+}
+/**
+ * よしくんGPT NEO PWA
+ * config.js
+ * 
+ * アプリ全体の設定管理
+ */
+
+"use strict";
+
+const YOSHIKUN_CONFIG = {
+
+    // アプリ基本情報
+    app: {
+        name: "よしくんGPT NEO",
+        version: "1.0.0",
+        mode: "PWA",
+        language: "ja-JP",
+
+        // 起動時メッセージ
+        welcomeMessage:
+            "こんにちは！よしくんGPT NEOです。\n" +
+            "質問・相談・アイデア作成など何でも聞いてください。"
+    },
+
+
+    // AI人格設定
+    personality: {
+
+        // AIの名前
+        botName: "よしくん",
+
+        // 話し方
+        style: [
+            "親しみやすい",
+            "分かりやすい",
+            "丁寧",
+            "少しユーモア"
+        ],
+
+        // 感情表現
+        emotionSystem: true,
+
+        emotions: {
+            happy: "😊",
+            thinking: "🤔",
+            surprised: "😲",
+            sorry: "🙇",
+            excited: "🔥"
+        }
+    },
+
+
+    // チャット設定
+    chat: {
+
+        // 最大保存メッセージ数
+        maxHistory: 100,
+
+        // 自動保存
+        autoSave: true,
+
+        // 保存場所
+        storageKey: "YOSHIKUN_GPT_HISTORY",
+
+        // 入力文字数制限
+        maxInputLength: 5000
+    },
+
+
+    // 記憶システム
+    memory: {
+
+        enabled: true,
+
+        // ユーザー情報保存
+        userMemory: true,
+
+        // 会話記憶
+        conversationMemory: true,
+
+        // 保存数
+        limit: 100
+    },
+
+
+    // 音声機能
+    speech: {
+
+        enabled: true,
+
+        // 音声読み上げ
+        textToSpeech: true,
+
+        // 音声入力
+        speechRecognition: true,
+
+        language: "ja-JP"
+    },
+
+
+    // PWA設定
+    pwa: {
+
+        installButton: true,
+
+        offlineMode: true,
+
+        serviceWorker: "sw.js",
+
+        manifest: "manifest.json"
+    },
+
+
+    // セキュリティ設定
+    security: {
+
+        // HTMLエスケープ
+        escapeHTML: true,
+
+        // XSS対策
+        preventXSS: true,
+
+        // 危険なコード実行禁止
+        allowScriptInjection: false
+    },
+
+
+    // UI設定
+    ui: {
+
+        theme: "dark",
+
+        animation: true,
+
+        bubbleBackground: false,
+
+        typingAnimation: true,
+
+        showTimestamp: true
+    },
+
+
+    // 拡張機能
+    features: {
+
+        fileReader: true,
+
+        imageUpload: true,
+
+        webSearch: false,
+
+        imageGeneration: false,
+
+        pluginSystem: true
+    }
+
+};
+
+
+// 他ファイルから利用可能にする
+if (typeof module !== "undefined") {
+    module.exports = YOSHIKUN_CONFIG;
+}
+
+/**
+ * よしくんGPT NEO
+ * config.js Part2
+ *
+ * 拡張設定
+ */
+
+
+// AIエンジン設定
+YOSHIKUN_CONFIG.ai = {
+
+    // 動作モード
+    mode: "offline",
+
+    /*
+        offline:
+        内蔵知識・ローカルAI処理
+
+        api:
+        外部AI API接続
+
+        hybrid:
+        ローカル + API
+    */
+
+    provider: "local",
+
+
+    // 回答設定
+    response: {
+
+        maxLength: 2000,
+
+        detailLevel: "high",
+
+        explainMode: true,
+
+        exampleMode: true,
+
+        stepByStep: true
+    },
+
+
+    // 推論設定
+    reasoning: {
+
+        enabled: true,
+
+        showThinking: false,
+
+        logicalAnswer: true
+    },
+
+
+    // 会話能力
+    conversation: {
+
+        contextAware: true,
+
+        rememberPrevious: true,
+
+        askBackQuestion: true,
+
+        personalityMode: true
+    }
+
+};
+
+
+
+
+// API設定
+YOSHIKUN_CONFIG.api = {
+
+    enabled: false,
+
+
+    // APIキー
+    key: "",
+
+
+    // API種類
+    service: "",
+
+
+    // 接続先
+    endpoint: "",
+
+
+    // タイムアウト
+    timeout: 30000,
+
+
+    // 使用制限
+    limits: {
+
+        dailyRequest: 100,
+
+        tokenLimit: 4000
+    }
+
+};
+
+
+
+
+// プラグイン管理
+YOSHIKUN_CONFIG.plugins = {
+
+
+    enabled: true,
+
+
+    installed: [
+
+        "knowledge",
+
+        "memory",
+
+        "speech",
+
+        "fileReader"
+
+    ],
+
+
+    allowExternalPlugin: false,
+
+
+    autoLoad: true
+
+};
+
+
+
+
+// イベントシステム
+YOSHIKUN_CONFIG.events = {
+
+
+    enabled: true,
+
+
+    events: {
+
+        onStart: true,
+
+        onMessageSend: true,
+
+        onMessageReceive: true,
+
+        onMemorySave: true,
+
+        onError: true
+
+    }
+
+};
+
+
+
+
+// ファイル処理設定
+YOSHIKUN_CONFIG.file = {
+
+
+    enabled: true,
+
+
+    supportedTypes: [
+
+        "txt",
+
+        "json",
+
+        "csv",
+
+        "html",
+
+        "md"
+
+    ],
+
+
+    maxSizeMB: 10,
+
+
+    autoAnalyze: true
+
+};
+
+
+
+
+// ログ設定
+YOSHIKUN_CONFIG.debug = {
+
+
+    enabled: false,
+
+
+    consoleLog: false,
+
+
+    saveLog: false,
+
+
+    logKey: "YOSHIKUN_DEBUG_LOG"
+
+};
+
+
+
+
+// 開発者設定
+YOSHIKUN_CONFIG.developer = {
+
+
+    developerMode: false,
+
+
+    showSystemInfo: false,
+
+
+    showPerformance: false,
+
+
+    experimentalFeatures: false
+
+};
+
+
+
+
+// 環境情報
+YOSHIKUN_CONFIG.environment = {
+
+
+    browserSupport: true,
+
+
+    mobileSupport: true,
+
+
+    iphoneOptimization: true,
+
+
+    androidOptimization: true
+
+};
+
+
+
+
+// バージョン管理
+YOSHIKUN_CONFIG.update = {
+
+
+    autoCheck: true,
+
+
+    checkInterval:
+
+        24 * 60 * 60 * 1000,
+
+
+    updateChannel:
+
+        "stable"
+
+};
+
+
+
+// 設定読み込み完了
+console.log(
+    "YoshikunGPT NEO Config Loaded",
+    YOSHIKUN_CONFIG.app.version
+);
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+viewport-fit=cover">
+
+
+<title>
+よしくんGPT NEO
+</title>
+
+
+<!-- PWA設定 -->
+
+<link rel="manifest"
+href="manifest.json">
+
+
+<meta name="theme-color"
+content="#111827">
+
+
+<meta name="apple-mobile-web-app-capable"
+content="yes">
+
+
+<meta name="apple-mobile-web-app-status-bar-style"
+content="black">
+
+
+<meta name="apple-mobile-web-app-title"
+content="よしくんGPT NEO">
+
+
+
+<!-- アイコン -->
+
+<link rel="apple-touch-icon"
+href="icon.png">
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet"
+href="style.css">
+
+
+
+</head>
+
+
+
+
+
+<body>
+
+
+
+<!-- =========================
+     アプリ全体
+========================= -->
+
+
+<div id="app">
+
+
+
+
+
+<!-- =========================
+     ヘッダー
+========================= -->
+
+
+<header class="header">
+
+
+<div class="logo">
+
+🤖
+
+</div>
+
+
+<div class="title">
+
+
+<h1>
+よしくんGPT NEO
+</h1>
+
+
+<p>
+AI Assistant System
+</p>
+
+
+</div>
+
+
+
+<button
+id="menuButton">
+
+☰
+
+</button>
+
+
+
+</header>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     チャットエリア
+========================= -->
+
+
+<main
+id="chatArea"
+class="chat-area">
+
+
+
+<!-- AI初期表示 -->
+
+<div class="message ai">
+
+
+こんにちは😊
+
+私は
+「よしくんGPT NEO」です。
+
+質問・相談・アイデア作成など
+何でも聞いてください。
+
+
+</div>
+
+
+
+</main>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     入力エリア
+========================= -->
+
+
+<footer class="input-area">
+
+
+
+<button
+id="voiceButton"
+title="音声入力">
+
+
+🎤
+
+
+</button>
+
+
+
+
+
+
+<input
+id="userInput"
+
+type="text"
+
+placeholder="メッセージを入力してください..."
+
+autocomplete="off">
+
+
+
+
+
+
+<button
+id="sendButton">
+
+
+送信
+
+
+</button>
+
+
+
+</footer>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     ファイル入力
+========================= -->
+
+
+<input
+
+type="file"
+
+id="fileInput"
+
+hidden>
+
+
+
+
+
+<!-- =========================
+     サイドメニュー
+========================= -->
+
+
+<div
+id="sideMenu"
+class="side-menu">
+
+
+
+<h2>
+設定
+</h2>
+
+
+
+
+<button
+id="clearHistory">
+
+
+🗑 履歴削除
+
+
+</button>
+
+
+
+
+
+<button
+id="backupButton">
+
+
+💾 バックアップ
+
+
+</button>
+
+
+
+
+
+<label
+class="file-label">
+
+
+📂 ファイル解析
+
+
+<input
+
+type="file"
+
+id="fileLoader"
+
+hidden>
+
+
+</label>
+
+
+
+
+
+
+<button
+id="installButton">
+
+
+📱 アプリとして追加
+
+
+</button>
+
+
+
+
+
+<button
+id="closeMenu">
+
+
+閉じる
+
+
+</button>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     オーバーレイ
+========================= -->
+
+
+<div
+
+id="overlay"
+
+class="overlay">
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     ローディング表示
+========================= -->
+
+
+<div
+
+id="loading"
+
+class="loading">
+
+
+<div class="loader">
+
+
+</div>
+
+
+
+<p>
+
+よしくんGPT NEO 起動中...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     JavaScript
+========================= -->
+
+
+
+<script src="js/config.js"></script>
+
+
+<script src="js/knowledge.js"></script>
+
+
+<script src="js/storage.js"></script>
+
+
+<script src="js/speech.js"></script>
+
+
+<script src="js/app.js"></script>
+
+
+<script src="js/bootstrap.js"></script>
+
+
+
+
+
+
+
+<script>
+
+
+/*
+==================================
+ 簡易UIイベント
+==================================
+*/
+
+
+
+const menuButton =
+
+document.getElementById(
+"menuButton"
+);
+
+
+
+const sideMenu =
+
+document.getElementById(
+"sideMenu"
+);
+
+
+
+const overlay =
+
+document.getElementById(
+"overlay"
+);
+
+
+
+if(menuButton){
+
+
+menuButton.onclick=function(){
+
+
+sideMenu.classList.add(
+"open"
+);
+
+
+overlay.classList.add(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+if(overlay){
+
+
+overlay.onclick=function(){
+
+
+sideMenu.classList.remove(
+"open"
+);
+
+
+overlay.classList.remove(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+const closeMenu =
+
+document.getElementById(
+"closeMenu"
+);
+
+
+
+if(closeMenu){
+
+
+closeMenu.onclick=function(){
+
+
+sideMenu.classList.remove(
+"open"
+);
+
+
+overlay.classList.remove(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+
+
+/*
+==============================
+ 音声ボタン
+==============================
+*/
+
+
+const voiceButton =
+
+document.getElementById(
+"voiceButton"
+);
+
+
+
+if(voiceButton){
+
+
+voiceButton.onclick=function(){
+
+
+
+if(
+typeof startVoiceInput
+!=="undefined"
+){
+
+
+startVoiceInput();
+
+
+}
+
+
+
+};
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==============================
+ ファイル読み込み
+==============================
+*/
+
+
+const fileLoader =
+
+document.getElementById(
+"fileLoader"
+);
+
+
+
+if(fileLoader){
+
+
+fileLoader.onchange=function(e){
+
+
+
+const file =
+e.target.files[0];
+
+
+
+if(
+file &&
+typeof readFile
+!=="undefined"
+){
+
+
+
+readFile(
+
+file,
+
+function(text){
+
+
+const result =
+
+analyzeFile(
+text
+);
+
+
+
+addAIMessage(
+result
+);
+
+
+
+}
+
+);
+
+
+
+}
+
+
+
+};
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==============================
+ PWAインストール
+==============================
+*/
+
+
+let deferredPrompt;
+
+
+
+window.addEventListener(
+
+"beforeinstallprompt",
+
+function(e){
+
+
+e.preventDefault();
+
+
+deferredPrompt=e;
+
+
+
+const btn =
+
+document.getElementById(
+"installButton"
+);
+
+
+
+if(btn){
+
+
+btn.style.display=
+"block";
+
+
+}
+
+
+
+}
+
+);
+
+
+
+
+
+
+
+const installButton =
+
+document.getElementById(
+"installButton"
+);
+
+
+
+if(installButton){
+
+
+installButton.onclick=
+async function(){
+
+
+
+if(deferredPrompt){
+
+
+deferredPrompt.prompt();
+
+
+
+deferredPrompt=null;
+
+
+}
+
+
+
+};
+
+
+
+}
+
+
+
+
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
+
+
+/**
+ * よしくんGPT NEO
+ * knowledge.js
+ *
+ * ローカル知識データベース
+ */
+
+"use strict";
+
+
+const YOSHIKUN_KNOWLEDGE = {
+
+
+    /*
+    ==================================
+        基本会話
+    ==================================
+    */
+
+    greetings: {
+
+        patterns: [
+            "こんにちは",
+            "こんばんは",
+            "おはよう",
+            "やあ",
+            "初めまして",
+            "よろしく"
+        ],
+
+
+        answers: [
+
+            "こんにちは！😊 よしくんGPT NEOです。今日は何をお手伝いしましょうか？",
+
+            "やあ！よしくんGPT NEOです🔥 質問でも相談でも気軽にどうぞ！",
+
+            "こんにちは！あなたのアイデア作りや問題解決をサポートします。"
+
+        ]
+
+    },
+
+
+
+
+    thanks: {
+
+        patterns: [
+
+            "ありがとう",
+            "助かった",
+            "感謝",
+            "サンキュー"
+
+        ],
+
+
+        answers: [
+
+            "どういたしまして😊 またいつでも相談してください！",
+
+            "役に立てて嬉しいです！🔥",
+
+            "了解です！これからもよしくんGPT NEOをよろしくお願いします。"
+
+        ]
+
+    },
+
+
+
+
+
+    farewell: {
+
+        patterns: [
+
+            "さようなら",
+            "またね",
+            "終了",
+            "バイバイ"
+
+        ],
+
+
+        answers: [
+
+            "またいつでも呼んでください😊",
+
+            "了解です！次回も全力サポートします🔥"
+
+        ]
+
+    },
+
+
+
+
+
+
+
+    /*
+    ==================================
+        AIについて
+    ==================================
+    */
+
+
+    ai: {
+
+
+        patterns: [
+
+            "あなたは誰",
+            "何ができる",
+            "AIとは",
+            "ChatGPTとは"
+
+        ],
+
+
+        answers: [
+
+            "私は『よしくんGPT NEO』です。質問への回答、文章作成、アイデア整理、プログラム制作などをサポートするAIアシスタントです。",
+
+            "AIとは、人間のように文章を理解したり、情報処理を行う人工知能技術です。"
+
+        ]
+
+    },
+
+
+
+
+
+
+    /*
+    ==================================
+        コンピューター関連
+    ==================================
+    */
+
+
+    computer: {
+
+
+        patterns: [
+
+            "パソコン",
+            "PC",
+            "Windows",
+            "Mac",
+            "設定",
+            "故障"
+
+        ],
+
+
+        answers: [
+
+            "パソコンの問題ですね。症状を詳しく教えてください。原因を一緒に確認します。",
+
+            "PCトラブルの場合は、エラー内容・使用環境・いつから発生したかを確認すると解決しやすいです。"
+
+        ]
+
+    },
+
+
+
+
+
+
+
+    /*
+    ==================================
+        スマホ関連
+    ==================================
+    */
+
+
+    smartphone: {
+
+
+        patterns: [
+
+            "iPhone",
+            "Android",
+            "スマホ",
+            "アプリ",
+            "設定"
+
+        ],
+
+
+        answers: [
+
+            "スマホの相談ですね😊 機種名と困っている内容を教えてください。",
+
+            "iPhoneやAndroidの設定、アプリ操作について説明できます。"
+
+        ]
+
+    },
+
+
+
+
+
+
+    /*
+    ==================================
+        PWA開発
+    ==================================
+    */
+
+
+    pwa: {
+
+
+        patterns: [
+
+            "PWA",
+            "アプリ化",
+            "ホーム画面",
+            "Service Worker",
+            "manifest"
+
+        ],
+
+
+        answers: [
+
+            "PWAはWebサイトをアプリのように利用できる技術です。インストール、オフライン動作、通知などが可能になります。",
+
+            "PWAには主にindex.html、manifest.json、service worker(sw.js)が必要です。"
+
+        ]
+
+    }
+
+};
+
+
+
+
+
+/*
+==================================
+ キーワード検索エンジン
+==================================
+*/
+
+
+function searchKnowledge(input){
+
+
+    const text =
+        input.toLowerCase();
+
+
+
+    for(
+        const category
+        in YOSHIKUN_KNOWLEDGE
+    ){
+
+
+        const data =
+            YOSHIKUN_KNOWLEDGE[category];
+
+
+        if(!data.patterns)
+            continue;
+
+
+
+        for(
+            const keyword
+            of data.patterns
+        ){
+
+
+            if(
+                text.includes(
+                    keyword.toLowerCase()
+                )
+            ){
+
+
+                const answers =
+                    data.answers;
+
+
+                return answers[
+                    Math.floor(
+                        Math.random()
+                        *
+                        answers.length
+                    )
+                ];
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+/**
+ * よしくんGPT NEO
+ * knowledge.js Part2
+ *
+ * 拡張知識データ
+ */
+
+
+/*
+==================================
+ プログラミング関連
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.programming = {
+
+
+    patterns: [
+
+        "プログラム",
+        "コード",
+        "JavaScript",
+        "HTML",
+        "CSS",
+        "Python",
+        "バグ",
+        "エラー"
+
+    ],
+
+
+    answers: [
+
+        "プログラムの相談ですね😊 使用している言語と、現在困っている内容を教えてください。",
+
+        "コードの修正、機能追加、仕組みの説明などをサポートできます。",
+
+        "エラー解決には、エラー文・対象コード・期待する動作を教えてもらうと分析しやすいです。"
+
+    ]
+
+};
+
+
+
+
+
+/*
+==================================
+ HTML / CSS / JS
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.webDevelopment = {
+
+
+    patterns: [
+
+        "ホームページ",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Webアプリ",
+        "サイト"
+
+    ],
+
+
+    answers: [
+
+        "Web制作ですね！HTMLは構造、CSSはデザイン、JavaScriptは動きや機能を担当します。",
+
+        "Webアプリ制作では、画面設計・機能設計・データ保存・セキュリティ対策が重要です。",
+
+        "よしくんGPT NEOのようなアプリもHTML、CSS、JavaScriptで作成できます。"
+
+    ]
+
+};
+
+
+
+
+
+
+/*
+==================================
+ 文章作成
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.writing = {
+
+
+    patterns: [
+
+        "文章",
+        "作文",
+        "メール",
+        "手紙",
+        "ブログ",
+        "記事"
+
+    ],
+
+
+    answers: [
+
+        "文章作成をお手伝いできます。目的・相手・雰囲気を教えてください😊",
+
+        "ビジネス文章、説明文、広告文、アイデア文章など作成できます。"
+
+    ]
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ アイデア生成
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.idea = {
+
+
+    patterns: [
+
+        "アイデア",
+        "考えて",
+        "企画",
+        "作りたい",
+        "新しい"
+
+    ],
+
+
+    answers: [
+
+        "面白いアイデアを一緒に考えましょう🔥 条件や目的を教えてください。",
+
+        "アイデア作りでは『誰向けか』『何を解決するか』を決めると発展しやすいです。"
+
+    ]
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 相談・悩み
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.consultation = {
+
+
+    patterns: [
+
+        "相談",
+        "悩み",
+        "困った",
+        "どうしたら",
+        "不安"
+
+    ],
+
+
+    answers: [
+
+        "相談ですね。状況を詳しく聞かせてください。一緒に整理して考えます😊",
+
+        "まず現在の状況と、どうなれば良いかを教えてください。"
+
+    ]
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 学習サポート
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.study = {
+
+
+    patterns: [
+
+        "勉強",
+        "教えて",
+        "意味",
+        "説明",
+        "覚え方"
+
+    ],
+
+
+    answers: [
+
+        "分からない内容をできるだけ簡単に説明します😊",
+
+        "初心者向け・詳しい説明・例付き説明など希望に合わせられます。"
+
+    ]
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 日付・時間関連
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.system = {
+
+
+    patterns: [
+
+        "今日",
+        "日時",
+        "時間",
+        "日付"
+
+    ],
+
+
+    answers: [
+
+        "現在の日付や時間は、お使いの端末情報を利用して確認できます。",
+
+        "JavaScriptではDateオブジェクトを使って日時取得ができます。"
+
+    ]
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 未知質問対応
+==================================
+*/
+
+YOSHIKUN_KNOWLEDGE.fallback = {
+
+
+    answers: [
+
+        "面白い質問ですね😊 もう少し詳しく教えてもらえれば、さらに詳しく答えられます。",
+
+        "調べたい内容や目的を教えてください。一緒に考えます。",
+
+        "その分野について整理して説明できます。条件を追加してください。"
+
+    ]
+
+};
+
+
+
+
+
+
+/*
+==================================
+ 回答取得関数
+==================================
+*/
+
+
+function getKnowledgeAnswer(input){
+
+
+    const result =
+        searchKnowledge(input);
+
+
+
+    if(result){
+
+        return result;
+
+    }
+
+
+
+    const fallback =
+        YOSHIKUN_KNOWLEDGE.fallback.answers;
+
+
+
+    return fallback[
+        Math.floor(
+            Math.random()
+            *
+            fallback.length
+        )
+    ];
+
+}
+
+
+
+
+
+/*
+==================================
+ 外部利用
+==================================
+*/
+
+
+if(typeof module !== "undefined"){
+
+    module.exports =
+        YOSHIKUN_KNOWLEDGE;
+
+}
+
+/**
+ * よしくんGPT NEO
+ * knowledge.js Part3
+ *
+ * 高度会話解析システム
+ */
+
+
+
+/*
+==================================
+ 類義語辞書
+==================================
+*/
+
+
+const YOSHIKUN_SYNONYMS = {
+
+
+    hello: [
+
+        "こんにちは",
+        "こんちは",
+        "やあ",
+        "おはよう",
+        "こんばんは"
+
+    ],
+
+
+
+    thanks: [
+
+        "ありがとう",
+        "助かる",
+        "感謝",
+        "ありがと"
+
+    ],
+
+
+
+    problem: [
+
+        "困った",
+        "エラー",
+        "動かない",
+        "壊れた",
+        "できない"
+
+    ],
+
+
+
+    create: [
+
+        "作る",
+        "制作",
+        "作成",
+        "開発",
+        "作って"
+
+    ],
+
+
+
+    explain: [
+
+        "教えて",
+        "説明して",
+        "意味は",
+        "詳しく"
+
+    ]
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 質問意図解析
+==================================
+*/
+
+
+function analyzeIntent(text){
+
+
+    const intents = {
+
+
+        question:false,
+
+        request:false,
+
+        problem:false,
+
+        greeting:false,
+
+        emotion:false
+
+    };
+
+
+
+    if(
+        text.includes("?") ||
+        text.includes("？") ||
+        text.includes("教えて")
+    ){
+
+        intents.question = true;
+
+    }
+
+
+
+    for(
+        const key in YOSHIKUN_SYNONYMS
+    ){
+
+
+        for(
+            const word of YOSHIKUN_SYNONYMS[key]
+        ){
+
+
+            if(
+                text.includes(word)
+            ){
+
+
+                if(key==="hello")
+                    intents.greeting=true;
+
+
+                if(key==="problem")
+                    intents.problem=true;
+
+
+                if(key==="create")
+                    intents.request=true;
+
+
+                if(key==="explain")
+                    intents.question=true;
+
+            }
+
+        }
+
+    }
+
+
+
+    return intents;
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 感情解析
+==================================
+*/
+
+
+const YOSHIKUN_EMOTION = {
+
+
+    positive:[
+
+        "嬉しい",
+        "楽しい",
+        "最高",
+        "良かった",
+        "ありがとう"
+
+    ],
+
+
+
+    negative:[
+
+        "悲しい",
+        "困った",
+        "辛い",
+        "不安",
+        "疲れた"
+
+    ],
+
+
+
+    angry:[
+
+        "怒る",
+        "ムカつく",
+        "最悪"
+
+    ]
+
+};
+
+
+
+
+
+
+function detectEmotion(text){
+
+
+
+    for(
+        const emotion in YOSHIKUN_EMOTION
+    ){
+
+
+        for(
+            const word of
+            YOSHIKUN_EMOTION[emotion]
+        ){
+
+
+            if(
+                text.includes(word)
+            ){
+
+                return emotion;
+
+            }
+
+        }
+
+    }
+
+
+    return "neutral";
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ よしくんGPT人格応答
+==================================
+*/
+
+
+function yoshikunPersonality(text){
+
+
+    const emotion =
+        detectEmotion(text);
+
+
+
+    const personality = {
+
+
+        positive:[
+
+            "それは良いですね😊",
+
+            "素敵な話ですね！",
+
+            "一緒にさらに良くしていきましょう🔥"
+
+        ],
+
+
+
+        negative:[
+
+            "大変な状況ですね。整理しながら考えていきましょう。",
+
+            "できるところから一つずつ解決していきましょう。"
+
+        ],
+
+
+
+        angry:[
+
+            "状況を整理すると解決策が見つかるかもしれません。",
+
+            "詳しい内容を教えてください。一緒に確認します。"
+
+        ]
+
+    };
+
+
+
+    if(
+        personality[emotion]
+    ){
+
+
+        const list =
+            personality[emotion];
+
+
+        return list[
+            Math.floor(
+                Math.random()
+                *
+                list.length
+            )
+        ];
+
+    }
+
+
+
+    return "";
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ AI聞き返しシステム
+==================================
+*/
+
+
+function generateQuestion(intent){
+
+
+    if(intent.problem){
+
+        return "どのような症状やエラーが発生していますか？";
+
+    }
+
+
+
+    if(intent.request){
+
+        return "目的や希望する形を教えてください。";
+
+    }
+
+
+
+    if(intent.question){
+
+        return "もう少し詳しい条件があると、より正確に説明できます。";
+
+    }
+
+
+
+    return "他にも知りたいことがあれば気軽に聞いてください😊";
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 高度回答生成
+==================================
+*/
+
+
+function generateAdvancedAnswer(input){
+
+
+
+    const intent =
+        analyzeIntent(input);
+
+
+
+    const emotionText =
+        yoshikunPersonality(input);
+
+
+
+    const base =
+        getKnowledgeAnswer(input);
+
+
+
+    const question =
+        generateQuestion(intent);
+
+
+
+    return (
+
+        emotionText +
+
+        "\n\n" +
+
+        base +
+
+        "\n\n" +
+
+        question
+
+    );
+
+}
+
+/**
+ * よしくんGPT NEO
+ * knowledge.js Part4
+ *
+ * 最終回答統合エンジン
+ */
+
+
+
+"use strict";
+
+
+
+
+
+/*
+==================================
+ 数学計算システム
+==================================
+*/
+
+
+function calculateExpression(text){
+
+
+    try{
+
+
+        const expression =
+            text
+            .replace(
+                /計算|して|ください|は|？|\?/g,
+                ""
+            )
+            .replace(
+                /足す/g,
+                "+"
+            )
+            .replace(
+                /引く/g,
+                "-"
+            )
+            .replace(
+                /掛ける|かける/g,
+                "*"
+            )
+            .replace(
+                /割る/g,
+                "/"
+            );
+
+
+        if(
+            /^[0-9+\-*/().\s]+$/
+            .test(expression)
+        ){
+
+
+            return (
+
+                "計算結果は\n\n" +
+
+                Function(
+                    "return "
+                    +
+                    expression
+                )()
+
+            );
+
+        }
+
+
+    }catch(e){
+
+
+        return null;
+
+    }
+
+
+    return null;
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 日時システム
+==================================
+*/
+
+
+function getDateAnswer(text){
+
+
+
+    const now =
+        new Date();
+
+
+
+    if(
+        text.includes("時間")
+    ){
+
+        return (
+
+            "現在時刻は " +
+
+            now.toLocaleTimeString(
+                "ja-JP"
+            )
+
+            +
+
+            " です。"
+
+        );
+
+    }
+
+
+
+
+    if(
+        text.includes("日付") ||
+        text.includes("今日")
+    ){
+
+
+        return (
+
+            "今日は " +
+
+            now.toLocaleDateString(
+                "ja-JP"
+            )
+
+            +
+
+            " です。"
+
+        );
+
+    }
+
+
+
+    return null;
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 会話記憶連携
+==================================
+*/
+
+
+const YOSHIKUN_CONTEXT = {
+
+
+    history: [],
+
+
+    userMemory:{},
+
+
+    maxLength:100
+
+
+};
+
+
+
+
+
+
+function addConversation(
+    user,
+    ai
+){
+
+
+    YOSHIKUN_CONTEXT.history.push({
+
+        user:user,
+
+        ai:ai,
+
+        date:
+            new Date()
+            .toISOString()
+
+    });
+
+
+
+    if(
+        YOSHIKUN_CONTEXT.history.length
+        >
+        YOSHIKUN_CONTEXT.maxLength
+    ){
+
+        YOSHIKUN_CONTEXT.history.shift();
+
+    }
+
+}
+
+
+
+
+
+
+function getConversationHistory(){
+
+
+    return YOSHIKUN_CONTEXT.history;
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ ユーザー記憶
+==================================
+*/
+
+
+function saveUserMemory(
+    key,
+    value
+){
+
+
+    YOSHIKUN_CONTEXT.userMemory[key]
+        =
+        value;
+
+
+}
+
+
+
+
+
+function getUserMemory(key){
+
+
+    return (
+        YOSHIKUN_CONTEXT
+        .userMemory[key]
+        ||
+        null
+    );
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 回答優先順位
+==================================
+*/
+
+
+function generateAnswer(input){
+
+
+
+    let answer;
+
+
+
+    /*
+    1. 計算
+    */
+
+    answer =
+        calculateExpression(input);
+
+
+
+    if(answer)
+        return answer;
+
+
+
+
+    /*
+    2. 日時
+    */
+
+    answer =
+        getDateAnswer(input);
+
+
+
+    if(answer)
+        return answer;
+
+
+
+
+    /*
+    3. 知識検索
+    */
+
+    answer =
+        generateAdvancedAnswer(input);
+
+
+
+    return answer;
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ AI API
+ app.js接続用
+==================================
+*/
+
+
+const YoshikunAI = {
+
+
+
+    ask:function(message){
+
+
+        const response =
+            generateAnswer(
+                message
+            );
+
+
+        addConversation(
+
+            message,
+
+            response
+
+        );
+
+
+        return response;
+
+
+    },
+
+
+
+    history:function(){
+
+
+        return getConversationHistory();
+
+
+    },
+
+
+
+    memory:{
+
+
+        save:function(
+            key,
+            value
+        ){
+
+            saveUserMemory(
+                key,
+                value
+            );
+
+        },
+
+
+        get:function(key){
+
+            return getUserMemory(
+                key
+            );
+
+        }
+
+
+    }
+
+
+};
+
+
+
+
+
+
+/*
+==================================
+ Export
+==================================
+*/
+
+
+if(
+    typeof module !== "undefined"
+){
+
+    module.exports =
+        YoshikunAI;
+
+}
+MIT License
+
+Copyright (c) 2026 YoshikunGPT NEO
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+MIT License
+
+Copyright (c) 2026 YoshikunGPT NEO
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+{
+  "name": "よしくんGPT NEO",
+
+  "short_name": "よしくんGPT",
+
+  "description":
+    "AIチャットアシスタント よしくんGPT NEO PWA版",
+
+  "lang": "ja-JP",
+
+  "start_url": "./index.html",
+
+  "scope": "./",
+
+
+  "display": "standalone",
+
+
+  "orientation": "portrait",
+
+
+  "background_color": "#020617",
+
+
+  "theme_color": "#2563eb",
+
+
+
+  "categories": [
+
+    "productivity",
+
+    "education",
+
+    "utilities"
+
+  ],
+
+
+
+  "icons": [
+
+    {
+
+      "src": "icon-192.png",
+
+      "sizes": "192x192",
+
+      "type": "image/png",
+
+      "purpose": "any maskable"
+
+    },
+
+
+    {
+
+      "src": "icon-512.png",
+
+      "sizes": "512x512",
+
+      "type": "image/png",
+
+      "purpose": "any maskable"
+
+    }
+
+  ]
+
+}
+# 🤖 よしくんGPT NEO
+
+次世代型 AIチャットアシスタント  
+**YoshikunGPT NEO PWA Edition**
+
+ブラウザで動作する、スマートフォン対応の
+PWA型AIチャットアプリです。
+
+---
+
+## 🚀 特徴
+
+- 💬 ChatGPT風チャットUI
+- 🧠 オフライン対応AI知識システム
+- 💾 会話履歴保存
+- 🧠 ユーザー記憶機能
+- 🎤 音声入力
+- 🔊 音声読み上げ
+- 📂 ファイル解析機能
+- 📱 PWAアプリ化対応
+- 🌙 ダークテーマUI
+- 📲 iPhone / Android対応
+
+---
+
+# 📱 PWAについて
+
+よしくんGPT NEOは通常のWebサイトではなく、
+
+**スマホアプリのようにインストールできるWebアプリ**
+
+として動作します。
+
+
+対応ブラウザ：
+
+- Google Chrome
+- Microsoft Edge
+- Safari(iPhone)
+
+---
+
+# 📂 ファイル構成
+
+
+"use strict";
+
+/************************************************
+ * よしくんGPT NEO PWA
+ * script.js
+ * Part1-1
+ ************************************************/
+
+/*==============================
+  DOM
+==============================*/
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+
+const typing = document.getElementById("typing");
+
+const darkBtn = document.getElementById("darkBtn");
+
+const menuBtn = document.getElementById("menuBtn");
+const menu = document.getElementById("menu");
+
+const speechBtn = document.getElementById("speechBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+
+const clearHistoryBtn =
+document.getElementById("clearHistory");
+
+const exportHistoryBtn =
+document.getElementById("exportHistory");
+
+const importHistoryBtn =
+document.getElementById("importHistory");
+
+const characterSelect =
+document.getElementById("characterSelect");
+
+const customPrompt =
+document.getElementById("customPrompt");
+
+const statusText =
+document.getElementById("status");
+
+const userTemplate =
+document.getElementById("userTemplate");
+
+const botTemplate =
+document.getElementById("botTemplate");
+
+/*==============================
+  LocalStorage Keys
+==============================*/
+
+const STORAGE = {
+
+    HISTORY: "neo_history",
+
+    CHARACTER: "character",
+
+    CUSTOM: "custom_prompt",
+
+    DARK: "darkMode",
+
+    SPEECH: "speech",
+
+    VERSION: "neo_version"
+
+};
+
+/*==============================
+  Version
+==============================*/
+
+const APP_VERSION = "NEO PWA 1.0";
+
+/*==============================
+  Runtime
+==============================*/
+
+let historyData = [];
+
+let speechEnabled = false;
+
+let recognizing = false;
+
+let currentCharacter = "yoshikun";
+
+let customCharacterPrompt = "";
+
+let typingNow = false;
+
+/*==============================
+  Character Prompt
+==============================*/
+
+const CHARACTER_PROMPTS = {
+
+    yoshikun:
+`あなたは「よしくんGPT NEO」です。
+親しみやすく優しい口調で回答してください。`,
+
+    teacher:
+`あなたは教師です。
+分かりやすく丁寧に教えてください。`,
+
+    maid:
+`あなたは優しいメイドです。
+丁寧語で可愛く話してください。`,
+
+    tsundere:
+`あなたはツンデレです。
+少し照れながら話してください。`
+
+};
+
+/*==============================
+  Utility
+==============================*/
+
+function sleep(ms){
+
+    return new Promise(resolve=>{
+
+        setTimeout(resolve,ms);
+
+    });
+
+}
+
+function random(min,max){
+
+    return Math.floor(
+
+        Math.random()*(max-min+1)
+
+    )+min;
+
+}
+
+function clamp(value,min,max){
+
+    return Math.max(
+
+        min,
+
+        Math.min(max,value)
+
+    );
+
+}
+
+function now(){
+
+    return Date.now();
+
+}
+
+function getTimeString(){
+
+    const d = new Date();
+
+    const h =
+    String(d.getHours()).padStart(2,"0");
+
+    const m =
+    String(d.getMinutes()).padStart(2,"0");
+
+    return `${h}:${m}`;
+
+}
+
+/*==============================
+  Scroll
+==============================*/
+
+function scrollBottom(){
+
+    requestAnimationFrame(()=>{
+
+        chat.scrollTop =
+
+        chat.scrollHeight;
+
+    });
+
+}
+
+/*==============================
+  Escape HTML
+==============================*/
+
+function escapeHTML(text){
+
+    if(text==null){
+
+        return "";
+
+    }
+
+    return String(text)
+
+    .replace(/&/g,"&amp;")
+
+    .replace(/</g,"&lt;")
+
+    .replace(/>/g,"&gt;")
+
+    .replace(/"/g,"&quot;")
+
+    .replace(/'/g,"&#039;");
+
+}
+
+/*==============================
+  Markdown
+==============================*/
+
+function markdown(text){
+
+    let html = escapeHTML(text);
+
+    html = html.replace(
+
+        /\*\*(.*?)\*\*/g,
+
+        "<strong>$1</strong>"
+
+    );
+
+    html = html.replace(
+
+        /\*(.*?)\*/g,
+
+        "<em>$1</em>"
+
+    );
+
+    html = html.replace(
+
+        /`([^`]+)`/g,
+
+        "<code>$1</code>"
+
+    );
+
+    html = html.replace(
+
+        /\n/g,
+
+        "<br>"
+
+    );
+
+    return html;
+
+}
+
+/*==============================
+  Status
+==============================*/
+
+function setStatus(message){
+
+    statusText.textContent = message;
+
+}
+
+/*==============================
+  Typing
+==============================*/
+
+function showTyping(){
+
+    typingNow = true;
+
+    typing.style.display="flex";
+
+    scrollBottom();
+
+}
+
+function hideTyping(){
+
+    typingNow = false;
+
+    typing.style.display="none";
+
+}
+
+/*==============================
+  Save
+==============================*/
+
+function saveHistory(){
+
+    localStorage.setItem(
+
+        STORAGE.HISTORY,
+
+        JSON.stringify(historyData)
+
+    );
+
+}
+
+/*==============================
+  Load
+==============================*/
+
+function loadHistoryData(){
+
+    try{
+
+        const data =
+
+        localStorage.getItem(
+
+            STORAGE.HISTORY
+
+        );
+
+        if(data){
+
+            historyData =
+
+            JSON.parse(data);
+
+        }
+
+    }catch(e){
+
+        historyData=[];
+
+    }
+
+}
+
+/*==================================================
+  Message
+==================================================*/
+
+function addMessage(role, text, save = true) {
+
+    const template =
+        role === "user"
+            ? userTemplate
+            : botTemplate;
+
+    const node =
+        template.content
+            .firstElementChild
+            .cloneNode(true);
+
+    const textArea =
+        node.querySelector(".text");
+
+    textArea.innerHTML =
+        markdown(text);
+
+    const bubble =
+        node.querySelector(".bubble");
+
+    bubble.dataset.time =
+        getTimeString();
+
+    chat.appendChild(node);
+
+    scrollBottom();
+
+    if (save) {
+
+        historyData.push({
+
+            role,
+
+            text,
+
+            time: Date.now()
+
+        });
+
+        saveHistory();
+
+    }
+
+}
+
+/*==================================================
+  Clear Chat
+==================================================*/
+
+function clearChat() {
+
+    chat.innerHTML = "";
+
+}
+
+/*==================================================
+  Restore
+==================================================*/
+
+function restoreHistory() {
+
+    clearChat();
+
+    historyData.forEach(item => {
+
+        addMessage(
+
+            item.role,
+
+            item.text,
+
+            false
+
+        );
+
+    });
+
+}
+
+/*==================================================
+  Welcome
+==================================================*/
+
+function welcomeMessage() {
+
+    if (historyData.length > 0) {
+
+        return;
+
+    }
+
+    addMessage(
+
+        "bot",
+
+`こんにちは！
+
+私は「よしくんGPT NEO」です🐱
+
+今日は何について話しましょう？`,
+
+        true
+
+    );
+
+}
+
+/*==================================================
+  Dark Mode
+==================================================*/
+
+function toggleDarkMode() {
+
+    document.body.classList.toggle("dark");
+
+    const dark =
+        document.body.classList.contains("dark");
+
+    localStorage.setItem(
+
+        STORAGE.DARK,
+
+        dark
+
+    );
+
+}
+
+/*==================================================
+  Menu
+==================================================*/
+
+function toggleMenu() {
+
+    menu.classList.toggle("open");
+
+}
+
+/*==================================================
+  Character
+==================================================*/
+
+function changeCharacter() {
+
+    currentCharacter =
+        characterSelect.value;
+
+    localStorage.setItem(
+
+        STORAGE.CHARACTER,
+
+        currentCharacter
+
+    );
+
+    if (currentCharacter === "custom") {
+
+        customPrompt.style.display =
+            "block";
+
+    } else {
+
+        customPrompt.style.display =
+            "none";
+
+    }
+
+}
+
+/*==================================================
+  Custom Prompt
+==================================================*/
+
+function saveCustomPrompt() {
+
+    customCharacterPrompt =
+        customPrompt.value;
+
+    localStorage.setItem(
+
+        STORAGE.CUSTOM,
+
+        customCharacterPrompt
+
+    );
+
+}
+
+/*==================================================
+  Load Settings
+==================================================*/
+
+function loadSettings() {
+
+    const dark =
+        localStorage.getItem(
+            STORAGE.DARK
+        );
+
+    if (dark === "true") {
+
+        document.body.classList.add(
+            "dark"
+        );
+
+    }
+
+    const chara =
+        localStorage.getItem(
+            STORAGE.CHARACTER
+        );
+
+    if (chara) {
+
+        characterSelect.value =
+            chara;
+
+        currentCharacter =
+            chara;
+
+    }
+
+    const custom =
+        localStorage.getItem(
+            STORAGE.CUSTOM
+        );
+
+    if (custom) {
+
+        customPrompt.value =
+            custom;
+
+        customCharacterPrompt =
+            custom;
+
+    }
+
+    changeCharacter();
+
+}
+
+/*==================================================
+  Online
+==================================================*/
+
+function updateOnlineStatus() {
+
+    if (navigator.onLine) {
+
+        setStatus("● オンライン");
+
+    } else {
+
+        setStatus("● オフライン");
+
+    }
+
+}
+
+/*==================================================
+  Event
+==================================================*/
+
+darkBtn.addEventListener(
+
+    "click",
+
+    toggleDarkMode
+
+);
+
+menuBtn.addEventListener(
+
+    "click",
+
+    toggleMenu
+
+);
+
+characterSelect.addEventListener(
+
+    "change",
+
+    changeCharacter
+
+);
+
+customPrompt.addEventListener(
+
+    "input",
+
+    saveCustomPrompt
+
+);
+
+window.addEventListener(
+
+    "online",
+
+    updateOnlineStatus
+
+);
+
+window.addEventListener(
+
+    "offline",
+
+    updateOnlineStatus
+
+);
+
+clearHistoryBtn.addEventListener(
+
+    "click",
+
+    () => {
+
+        if (!confirm("履歴を削除しますか？")) {
+
+            return;
+
+        }
+
+        historyData = [];
+
+        saveHistory();
+
+        clearChat();
+
+        welcomeMessage();
+
+    }
+
+);
+
+/*==================================================
+  Initialize
+==================================================*/
+
+function initialize() {
+
+    loadHistoryData();
+
+    loadSettings();
+
+    restoreHistory();
+
+    welcomeMessage();
+
+    updateOnlineStatus();
+
+    scrollBottom();
+
+    console.log(
+
+        "YoshikunGPT NEO",
+
+        APP_VERSION,
+
+        "Initialized"
+
+    );
+
+}
+
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    initialize
+
+);
+
+/*==================================================
+  Busy Lock
+==================================================*/
+
+let sending = false;
+
+function setSending(flag) {
+
+    sending = flag;
+
+    input.disabled = flag;
+
+    sendBtn.disabled = flag;
+
+}
+
+/*==================================================
+  Input Utility
+==================================================*/
+
+function getInputText() {
+
+    return input.value.trim();
+
+}
+
+function clearInput() {
+
+    input.value = "";
+
+}
+
+function focusInput() {
+
+    input.focus();
+
+}
+
+/*==================================================
+  Send Validation
+==================================================*/
+
+function validateMessage(text) {
+
+    if (!text) {
+
+        return false;
+
+    }
+
+    if (text.length > 5000) {
+
+        addMessage(
+
+            "bot",
+
+            "入力が長すぎます。（5000文字以内）"
+
+        );
+
+        return false;
+
+    }
+
+    return true;
+
+}
+
+/*==================================================
+  Thinking Animation
+==================================================*/
+
+async function beginThinking() {
+
+    showTyping();
+
+    await sleep(
+
+        random(300, 900)
+
+    );
+
+}
+
+function finishThinking() {
+
+    hideTyping();
+
+}
+
+/*==================================================
+  AI Response Wrapper
+==================================================*/
+
+async function generateReply(message) {
+
+    if (typeof getKnowledgeResponse === "function") {
+
+        try {
+
+            const result = await getKnowledgeResponse(message);
+
+            if (result && result.trim()) {
+
+                return result;
+
+            }
+
+        } catch (e) {
+
+            console.error(e);
+
+        }
+
+    }
+
+    if (typeof findAnswer === "function") {
+
+        try {
+
+            const result = await findAnswer(message);
+
+            if (result && result.trim()) {
+
+                return result;
+
+            }
+
+        } catch (e) {
+
+            console.error(e);
+
+        }
+
+    }
+
+    return "まだその内容は勉強中です😊";
+
+}
+
+/*==================================================
+  Main Send
+==================================================*/
+
+async function sendMessage() {
+
+    if (sending) {
+
+        return;
+
+    }
+
+    const text = getInputText();
+
+    if (!validateMessage(text)) {
+
+        return;
+
+    }
+
+    clearInput();
+
+    addMessage(
+
+        "user",
+
+        text
+
+    );
+
+    setSending(true);
+
+    await beginThinking();
+
+    try {
+
+        const reply = await generateReply(text);
+
+        finishThinking();
+
+        addMessage(
+
+            "bot",
+
+            reply
+
+        );
+
+        if (
+
+            speechEnabled &&
+
+            typeof speakText === "function"
+
+        ) {
+
+            speakText(reply);
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        finishThinking();
+
+        addMessage(
+
+            "bot",
+
+            "エラーが発生しました。"
+
+        );
+
+    }
+
+    setSending(false);
+
+    focusInput();
+
+}
+
+/*==================================================
+  Keyboard
+==================================================*/
+
+input.addEventListener(
+
+    "keydown",
+
+    function (e) {
+
+        if (
+
+            e.key === "Enter" &&
+
+            !e.shiftKey
+
+        ) {
+
+            e.preventDefault();
+
+            sendMessage();
+
+        }
+
+    }
+
+);
+
+/*==================================================
+  Speech Synthesis
+==================================================*/
+
+speechBtn.addEventListener("click", () => {
+    speechEnabled = !speechEnabled;
+
+    localStorage.setItem(
+        STORAGE.SPEECH,
+        speechEnabled
+    );
+
+    speechBtn.classList.toggle(
+        "active",
+        speechEnabled
+    );
+
+    addMessage(
+        "bot",
+        speechEnabled
+            ? "🔊 読み上げをONにしました。"
+            : "🔇 読み上げをOFFにしました。"
+    );
+});
+
+function speakText(text) {
+
+    if (!speechEnabled) return;
+
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const utter =
+        new SpeechSynthesisUtterance(text);
+
+    utter.lang = "ja-JP";
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+
+    window.speechSynthesis.speak(utter);
+
+}
+
+/*==================================================
+  Speech Recognition
+==================================================*/
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+let recognition = null;
+
+if (SpeechRecognition) {
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.lang = "ja-JP";
+
+    recognition.interimResults = false;
+
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+
+        recognizing = true;
+
+        voiceBtn.classList.add("active");
+
+    };
+
+    recognition.onend = () => {
+
+        recognizing = false;
+
+        voiceBtn.classList.remove("active");
+
+    };
+
+    recognition.onerror = () => {
+
+        recognizing = false;
+
+        voiceBtn.classList.remove("active");
+
+    };
+
+    recognition.onresult = (event) => {
+
+        const text =
+            event.results[0][0].transcript;
+
+        input.value = text;
+
+        sendMessage();
+
+    };
+
+}
+
+voiceBtn.addEventListener("click", () => {
+
+    if (!recognition) {
+
+        addMessage(
+            "bot",
+            "このブラウザは音声入力に対応していません。"
+        );
+
+        return;
+
+    }
+
+    if (recognizing) {
+
+        recognition.stop();
+
+    } else {
+
+        recognition.start();
+
+    }
+
+});
+
+/*==================================================
+  Export History
+==================================================*/
+
+exportHistoryBtn.addEventListener("click", () => {
+
+    const blob = new Blob(
+
+        [
+
+            JSON.stringify(
+                historyData,
+                null,
+                2
+            )
+
+        ],
+
+        {
+
+            type:
+                "application/json"
+
+        }
+
+    );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+        "YoshikunGPT_History.json";
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+});
+
+/*==================================================
+  Import History
+==================================================*/
+
+importHistoryBtn.addEventListener("click", () => {
+
+    const file =
+        document.createElement("input");
+
+    file.type = "file";
+
+    file.accept = ".json";
+
+    file.onchange = e => {
+
+        const target =
+            e.target.files[0];
+
+        if (!target) return;
+
+        const reader =
+            new FileReader();
+
+        reader.onload = () => {
+
+            try {
+
+                historyData =
+                    JSON.parse(
+                        reader.result
+                    );
+
+                saveHistory();
+
+                restoreHistory();
+
+                addMessage(
+                    "bot",
+                    "履歴を読み込みました。"
+                );
+
+            } catch {
+
+                addMessage(
+                    "bot",
+                    "読み込みに失敗しました。"
+                );
+
+            }
+
+        };
+
+        reader.readAsText(target);
+
+    };
+
+    file.click();
+
+});
+
+/*==================================================
+  Shortcuts
+==================================================*/
+
+document.addEventListener("keydown", e => {
+
+    if (e.ctrlKey && e.key === "l") {
+
+        e.preventDefault();
+
+        clearHistoryBtn.click();
+
+    }
+
+    if (e.ctrlKey && e.key === "m") {
+
+        e.preventDefault();
+
+        toggleMenu();
+
+    }
+
+});
+
+/*==================================================
+  Page Visibility
+==================================================*/
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            document.hidden &&
+            "speechSynthesis" in window
+        ) {
+
+            speechSynthesis.cancel();
+
+        }
+
+    }
+);
+
+/*==================================================
+  Online Status Monitor
+==================================================*/
+
+setInterval(() => {
+
+    updateOnlineStatus();
+
+}, 5000);
+
+/*==================================================
+  Startup
+==================================================*/
+
+window.addEventListener("load", () => {
+
+    speechEnabled =
+        localStorage.getItem(
+            STORAGE.SPEECH
+        ) === "true";
+
+    speechBtn.classList.toggle(
+        "active",
+        speechEnabled
+    );
+
+    focusInput();
+
+    console.log(
+        "script.js Part1 Complete"
+    );
+
+});
+
+/**************************************************
+ * End of Part1
+ * Part2からAI応答ロジックへ続く
+ **************************************************/
+
+/*==================================================
+  Part2-1A
+  Advanced AI Engine (Extension)
+==================================================*/
+
+/*
+    このファイルは Part1 を上書きしません。
+    generateReply() から利用するための
+    高度な検索エンジンを追加します。
+*/
+
+/*==================================================
+  Conversation Context
+==================================================*/
+
+const conversationContext = {
+
+    lastUserMessage: "",
+
+    lastBotMessage: "",
+
+    topic: "",
+
+    emotion: "normal",
+
+    messageCount: 0
+
+};
+
+/*==================================================
+  Input Normalize
+==================================================*/
+
+function normalizeInput(text){
+
+    if(!text){
+
+        return "";
+
+    }
+
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g," ")
+        .replace(/[！？]/g,"")
+        .replace(/[。、]/g,"")
+        .replace(/[!?.]/g,"");
+
+}
+
+/*==================================================
+  Character Prompt
+==================================================*/
+
+function getCurrentPrompt(){
+
+    if(currentCharacter==="custom"){
+
+        if(customCharacterPrompt.trim()!==""){
+
+            return customCharacterPrompt;
+
+        }
+
+    }
+
+    return CHARACTER_PROMPTS[currentCharacter]
+        || CHARACTER_PROMPTS.yoshikun;
+
+}
+
+/*==================================================
+  Update Context
+==================================================*/
+
+function updateConversationContext(user,bot){
+
+    conversationContext.lastUserMessage=user;
+
+    conversationContext.lastBotMessage=bot;
+
+    conversationContext.messageCount++;
+
+}
+
+/*==================================================
+  Keyword Split
+==================================================*/
+
+function splitKeywords(text){
+
+    return normalizeInput(text)
+
+        .split(" ")
+
+        .filter(v=>v.length>0);
+
+}
+
+/*==================================================
+  Similarity
+==================================================*/
+
+function similarity(a,b){
+
+    a=normalizeInput(a);
+
+    b=normalizeInput(b);
+
+    if(a===b){
+
+        return 1;
+
+    }
+
+    const wa=splitKeywords(a);
+
+    const wb=splitKeywords(b);
+
+    let score=0;
+
+    wa.forEach(word=>{
+
+        if(wb.includes(word)){
+
+            score++;
+
+        }
+
+    });
+
+    return score/
+
+    Math.max(
+
+        wa.length,
+
+        wb.length,
+
+        1
+
+    );
+
+}
+
+/*==================================================
+  Knowledge Search
+==================================================*/
+
+function searchKnowledgeBase(message){
+
+    if(typeof knowledge==="undefined"){
+
+        return null;
+
+    }
+
+    let bestAnswer=null;
+
+    let bestScore=0;
+
+    for(const item of knowledge){
+
+        if(!item.question) continue;
+
+        const score=
+
+            similarity(
+
+                message,
+
+                item.question
+
+            );
+
+        if(score>bestScore){
+
+            bestScore=score;
+
+            bestAnswer=item.answer;
+
+        }
+
+    }
+
+    if(bestScore>=0.5){
+
+        return bestAnswer;
+
+    }
+
+    return null;
+
+}
+
+/*==================================================
+  Greeting Detection
+==================================================*/
+
+function isGreeting(text){
+
+    const greetings=[
+
+        "こんにちは",
+
+        "こんばんは",
+
+        "おはよう",
+
+        "やあ",
+
+        "もしもし",
+
+        "hello",
+
+        "hi"
+
+    ];
+
+    return greetings.some(
+
+        g=>text.includes(g)
+
+    );
+
+}
+
+/*==================================================
+  Thanks Detection
+==================================================*/
+
+function isThanks(text){
+
+    const words=[
+
+        "ありがとう",
+
+        "助かった",
+
+        "感謝",
+
+        "thanks",
+
+        "thank"
+
+    ];
+
+    return words.some(
+
+        w=>text.includes(w)
+
+    );
+
+}
+
+/*==================================================
+  Question Detection
+==================================================*/
+
+function isQuestion(text){
+
+    return text.includes("？")
+
+        ||
+
+        text.includes("?")
+
+        ||
+
+        text.includes("教えて")
+
+        ||
+
+        text.includes("とは")
+
+        ||
+
+        text.includes("なに");
+
+}
+
+/*==================================================
+  AI Engine Entry
+==================================================*/
+
+async function generateAdvancedReply(message){
+
+    const text=
+
+        normalizeInput(message);
+
+    /* あいさつ */
+
+    if(isGreeting(text)){
+
+        return "こんにちは！今日はどんなお話をしましょう？😊";
+
+    }
+
+    /* お礼 */
+
+    if(isThanks(text)){
+
+        return "どういたしまして！また何でも聞いてください😊";
+
+    }
+
+    /* knowledge.js */
+
+    const result=
+
+        searchKnowledgeBase(text);
+
+    if(result){
+
+        return result;
+
+    }
+
+    /* Part2-1Bへ */
+
+    return null;
+
+}
+
+/*==================================================
+  Part2-1B-1
+  Advanced Search Engine
+==================================================*/
+
+/*==================================================
+  Synonym Dictionary
+==================================================*/
+
+const SYNONYMS = {
+
+    "ai":[
+        "人工知能",
+        "chatgpt",
+        "gpt"
+    ],
+
+    "猫":[
+        "ねこ",
+        "ネコ",
+        "cat"
+    ],
+
+    "犬":[
+        "いぬ",
+        "イヌ",
+        "dog"
+    ],
+
+    "学校":[
+        "スクール",
+        "school"
+    ],
+
+    "ゲーム":[
+        "game",
+        "ゲーミング"
+    ]
+
+};
+
+/*==================================================
+  Expand Synonyms
+==================================================*/
+
+function expandKeywords(words){
+
+    const result=[];
+
+    words.forEach(word=>{
+
+        result.push(word);
+
+        Object.entries(SYNONYMS)
+
+        .forEach(([key,list])=>{
+
+            if(
+
+                key===word ||
+
+                list.includes(word)
+
+            ){
+
+                result.push(key);
+
+                result.push(...list);
+
+            }
+
+        });
+
+    });
+
+    return [...new Set(result)];
+
+}
+
+/*==================================================
+  Levenshtein Distance
+==================================================*/
+
+function levenshtein(a,b){
+
+    a=normalizeInput(a);
+
+    b=normalizeInput(b);
+
+    const matrix=[];
+
+    for(let i=0;i<=b.length;i++){
+
+        matrix[i]=[i];
+
+    }
+
+    for(let j=0;j<=a.length;j++){
+
+        matrix[0][j]=j;
+
+    }
+
+    for(let i=1;i<=b.length;i++){
+
+        for(let j=1;j<=a.length;j++){
+
+            if(
+
+                b.charAt(i-1)===
+
+                a.charAt(j-1)
+
+            ){
+
+                matrix[i][j]=
+
+                matrix[i-1][j-1];
+
+            }else{
+
+                matrix[i][j]=Math.min(
+
+                    matrix[i-1][j-1]+1,
+
+                    matrix[i][j-1]+1,
+
+                    matrix[i-1][j]+1
+
+                );
+
+            }
+
+        }
+
+    }
+
+    return matrix[b.length][a.length];
+
+}
+
+/*==================================================
+  Text Similarity
+==================================================*/
+
+function fuzzySimilarity(a,b){
+
+    const distance=
+
+        levenshtein(a,b);
+
+    const maxLength=
+
+        Math.max(
+
+            a.length,
+
+            b.length,
+
+            1
+
+        );
+
+    return 1-
+
+        distance/maxLength;
+
+}
+
+/*==================================================
+  Keyword Score
+==================================================*/
+
+function keywordScore(input,target){
+
+    const words=
+
+        expandKeywords(
+
+            splitKeywords(input)
+
+        );
+
+    let score=0;
+
+    words.forEach(word=>{
+
+        if(
+
+            target.includes(word)
+
+        ){
+
+            score+=2;
+
+        }
+
+    });
+
+    return score;
+
+}
+
+/*==================================================
+  Advanced Score
+==================================================*/
+
+function calculateKnowledgeScore(
+
+    input,
+
+    question
+
+){
+
+    const fuzzy=
+
+        fuzzySimilarity(
+
+            input,
+
+            question
+
+        );
+
+    const keyword=
+
+        keywordScore(
+
+            input,
+
+            normalizeInput(question)
+
+        );
+
+    return (
+
+        fuzzy*0.7+
+
+        keyword*0.3
+
+    );
+
+}
+
+/*==================================================
+  Ranking
+==================================================*/
+
+function rankKnowledge(list,input){
+
+    return list
+
+    .map(item=>{
+
+        return{
+
+            item,
+
+            score:
+
+            calculateKnowledgeScore(
+
+                input,
+
+                item.question||""
+
+            )
+
+        };
+
+    })
+
+    .sort(
+
+        (a,b)=>
+
+        b.score-a.score
+
+    );
+
+}
+
+/*==================================================
+  Part2-1B-2
+  Knowledge Ranking & Advanced Search
+==================================================*/
+
+/*==================================================
+  Search Ranked Knowledge
+==================================================*/
+
+function searchKnowledgeRanked(input){
+
+    if(typeof knowledge==="undefined"){
+
+        return null;
+
+    }
+
+    if(!Array.isArray(knowledge)){
+
+        return null;
+
+    }
+
+    const ranked=
+
+        rankKnowledge(
+
+            knowledge,
+
+            input
+
+        );
+
+    if(ranked.length===0){
+
+        return null;
+
+    }
+
+    const best=ranked[0];
+
+    if(best.score<0.45){
+
+        return null;
+
+    }
+
+    return{
+
+        answer:best.item.answer,
+
+        question:best.item.question,
+
+        score:best.score
+
+    };
+
+}
+
+/*==================================================
+  Contains Search
+==================================================*/
+
+function containsKnowledge(input){
+
+    if(typeof knowledge==="undefined"){
+
+        return null;
+
+    }
+
+    const text=
+
+        normalizeInput(input);
+
+    for(const item of knowledge){
+
+        const q=
+
+            normalizeInput(
+
+                item.question||""
+
+            );
+
+        if(
+
+            q.includes(text)||
+
+            text.includes(q)
+
+        ){
+
+            return item.answer;
+
+        }
+
+    }
+
+    return null;
+
+}
+
+/*==================================================
+  Random Knowledge
+==================================================*/
+
+function randomKnowledge(){
+
+    if(typeof knowledge==="undefined"){
+
+        return null;
+
+    }
+
+    if(!knowledge.length){
+
+        return null;
+
+    }
+
+    return knowledge[
+
+        random(
+
+            0,
+
+            knowledge.length-1
+
+        )
+
+    ].answer;
+
+}
+
+/*==================================================
+  Smart Search
+==================================================*/
+
+function smartKnowledgeSearch(message){
+
+    const ranked=
+
+        searchKnowledgeRanked(message);
+
+    if(ranked){
+
+        console.log(
+
+            "Knowledge Match",
+
+            ranked.question,
+
+            ranked.score
+
+        );
+
+        return ranked.answer;
+
+    }
+
+    const contain=
+
+        containsKnowledge(message);
+
+    if(contain){
+
+        return contain;
+
+    }
+
+    return null;
+
+}
+
+/*==================================================
+  Conversation Memory
+==================================================*/
+
+const recentTopics=[];
+
+function rememberTopic(message){
+
+    const words=
+
+        splitKeywords(message);
+
+    words.forEach(word=>{
+
+        if(word.length<2){
+
+            return;
+
+        }
+
+        recentTopics.unshift(word);
+
+    });
+
+    while(recentTopics.length>30){
+
+        recentTopics.pop();
+
+    }
+
+}
+
+/*==================================================
+  Suggest Topic
+==================================================*/
+
+function suggestTopic(){
+
+    if(recentTopics.length===0){
+
+        return "";
+
+    }
+
+    const topic=
+
+        recentTopics[0];
+
+    return `そういえば「${topic}」についても詳しく知りたいですか？`;
+
+}
+
+/*==================================================
+  Extend generateAdvancedReply
+==================================================*/
+
+const __oldGenerateAdvancedReply=
+
+generateAdvancedReply;
+
+generateAdvancedReply=
+
+async function(message){
+
+    rememberTopic(message);
+
+    const basic=
+
+        await __oldGenerateAdvancedReply(message);
+
+    if(basic){
+
+        return basic;
+
+    }
+
+    const smart=
+
+        smartKnowledgeSearch(message);
+
+    if(smart){
+
+        return smart;
+
+    }
+
+    if(isQuestion(message)){
+
+        return
+
+`その内容はまだ十分な知識がありません。
+
+knowledge.jsへ追加すると
+もっと詳しく回答できます。`;
+
+    }
+
+    return null;
+
+};
+
+/*==================================================
+  Debug
+==================================================*/
+
+console.log(
+
+    "Advanced Knowledge Engine Loaded"
+
+);
+
+/*==================================================
+  Part2-2
+  Smart Conversation Engine
+==================================================*/
+
+/*==================================================
+  Date / Time
+==================================================*/
+
+function getCurrentDateTime(){
+
+    const now=new Date();
+
+    return{
+
+        year:now.getFullYear(),
+
+        month:now.getMonth()+1,
+
+        day:now.getDate(),
+
+        hour:now.getHours(),
+
+        minute:now.getMinutes(),
+
+        week:["日","月","火","水","木","金","土"][now.getDay()]
+
+    };
+
+}
+
+/*==================================================
+  Calculator
+==================================================*/
+
+function calculateExpression(text){
+
+    const exp=text.replace(/[＝=]/g,"");
+
+    if(!/^[0-9+\-*/(). ]+$/.test(exp)){
+
+        return null;
+
+    }
+
+    try{
+
+        const result=Function(
+
+            `"use strict";return (${exp})`
+
+        )();
+
+        if(Number.isFinite(result)){
+
+            return result;
+
+        }
+
+    }catch(e){}
+
+    return null;
+
+}
+
+/*==================================================
+  Fortune
+==================================================*/
+
+const fortunes=[
+
+"🌸大吉：今日は最高の一日になりそうです！",
+
+"😊中吉：少し頑張ると良いことがあります。",
+
+"🍀小吉：焦らず行動すると運気UP。",
+
+"⭐吉：新しいことに挑戦すると◎",
+
+"☀末吉：落ち着いて過ごしましょう。"
+
+];
+
+function randomFortune(){
+
+    return fortunes[
+
+        random(
+
+            0,
+
+            fortunes.length-1
+
+        )
+
+    ];
+
+}
+
+/*==================================================
+  Recommend
+==================================================*/
+
+const recommendList=[
+
+"映画を見る",
+
+"散歩する",
+
+"読書する",
+
+"ゲームで遊ぶ",
+
+"音楽を聴く",
+
+"ラーメンを食べる",
+
+"コーヒーを飲む",
+
+"猫の動画を見る"
+
+];
+
+function randomRecommend(){
+
+    return
+
+    "おすすめは「"+
+
+    recommendList[
+
+        random(
+
+            0,
+
+            recommendList.length-1
+
+        )
+
+    ]+
+
+    "」です😊";
+
+}
+
+/*==================================================
+  Small Talk
+==================================================*/
+
+const talks=[
+
+"今日はどんな一日でしたか？",
+
+"何か面白いことがありましたか？",
+
+"最近ハマっているものはありますか？",
+
+"困っていることがあれば教えてください。",
+
+"猫は好きですか？🐱",
+
+"ゲームは何を遊びますか？",
+
+"今日はゆっくり休めそうですか？"
+
+];
+
+function randomTalk(){
+
+    return talks[
+
+        random(
+
+            0,
+
+            talks.length-1
+
+        )
+
+    ];
+
+}
+
+/*==================================================
+  Character Style
+==================================================*/
+
+function applyCharacterStyle(text){
+
+    switch(currentCharacter){
+
+        case "teacher":
+
+            return
+
+            "【先生】\n"+text;
+
+        case "maid":
+
+            return
+
+            text+" ☕";
+
+        case "tsundere":
+
+            return
+
+            text+
+
+            "…べ、別にあなたのためじゃないんだから！";
+
+        default:
+
+            return text;
+
+    }
+
+}
+
+/*==================================================
+  Conversation Handler
+==================================================*/
+
+function conversationEngine(message){
+
+    const lower=
+
+        normalizeInput(message);
+
+    if(
+
+        lower.includes("今日")
+
+        &&
+
+        lower.includes("日")
+
+    ){
+
+        const d=
+
+            getCurrentDateTime();
+
+        return
+
+`${d.year}年${d.month}月${d.day}日（${d.week}曜日）です。`;
+
+    }
+
+    if(
+
+        lower.includes("時間")
+
+        ||
+
+        lower.includes("何時")
+
+    ){
+
+        const d=
+
+            getCurrentDateTime();
+
+        return
+
+`${d.hour}時${String(d.minute).padStart(2,"0")}分です。`;
+
+    }
+
+    if(
+
+        lower.includes("占い")
+
+    ){
+
+        return randomFortune();
+
+    }
+
+    if(
+
+        lower.includes("おすすめ")
+
+    ){
+
+        return randomRecommend();
+
+    }
+
+    if(
+
+        lower.includes("暇")
+
+    ){
+
+        return randomTalk();
+
+    }
+
+    const calc=
+
+        calculateExpression(
+
+            lower
+
+        );
+
+    if(calc!==null){
+
+        return
+
+        "計算結果は **"+
+
+        calc+
+
+        "** です。";
+
+    }
+
+    return null;
+
+}
+
+/*==================================================
+  Extend AI Engine
+==================================================*/
+
+const __advancedReply2=
+
+generateAdvancedReply;
+
+generateAdvancedReply=
+
+async function(message){
+
+    const result=
+
+        await __advancedReply2(message);
+
+    if(result){
+
+        return
+
+        applyCharacterStyle(result);
+
+    }
+
+    const smart=
+
+        conversationEngine(message);
+
+    if(smart){
+
+        return
+
+        applyCharacterStyle(smart);
+
+    }
+
+    return null;
+
+};
+
+console.log(
+
+"Part2-2 Loaded"
+
+);
+
+/*==================================================
+  Part2-3A
+  Emotion System
+==================================================*/
+
+/*==================================================
+  Emotion State
+==================================================*/
+
+const EMOTION = {
+
+    NORMAL: "normal",
+
+    HAPPY: "happy",
+
+    SAD: "sad",
+
+    ANGRY: "angry",
+
+    TIRED: "tired",
+
+    SURPRISED: "surprised"
+
+};
+
+let userEmotion = EMOTION.NORMAL;
+
+let aiEmotion = EMOTION.NORMAL;
+
+/*==================================================
+  Emotion Dictionary
+==================================================*/
+
+const EMOTION_WORDS = {
+
+    happy: [
+
+        "嬉しい",
+        "楽しい",
+        "最高",
+        "幸せ",
+        "やった",
+        "成功",
+        "笑"
+
+    ],
+
+    sad: [
+
+        "悲しい",
+        "泣",
+        "寂しい",
+        "辛い",
+        "つらい",
+        "落ち込"
+
+    ],
+
+    angry: [
+
+        "怒",
+        "腹立",
+        "ムカ",
+        "最悪",
+        "イライラ"
+
+    ],
+
+    tired: [
+
+        "疲れ",
+        "眠い",
+        "だるい",
+        "しんどい",
+        "眠"
+
+    ]
+
+};
+
+/*==================================================
+  Detect Emotion
+==================================================*/
+
+function detectEmotion(message){
+
+    const text = normalizeInput(message);
+
+    for(const word of EMOTION_WORDS.happy){
+
+        if(text.includes(normalizeInput(word))){
+
+            return EMOTION.HAPPY;
+
+        }
+
+    }
+
+    for(const word of EMOTION_WORDS.sad){
+
+        if(text.includes(normalizeInput(word))){
+
+            return EMOTION.SAD;
+
+        }
+
+    }
+
+    for(const word of EMOTION_WORDS.angry){
+
+        if(text.includes(normalizeInput(word))){
+
+            return EMOTION.ANGRY;
+
+        }
+
+    }
+
+    for(const word of EMOTION_WORDS.tired){
+
+        if(text.includes(normalizeInput(word))){
+
+            return EMOTION.TIRED;
+
+        }
+
+    }
+
+    return EMOTION.NORMAL;
+
+}
+
+/*==================================================
+  Emotion Update
+==================================================*/
+
+function updateEmotion(message){
+
+    userEmotion = detectEmotion(message);
+
+    switch(userEmotion){
+
+        case EMOTION.HAPPY:
+
+            aiEmotion = EMOTION.HAPPY;
+
+            break;
+
+        case EMOTION.SAD:
+
+            aiEmotion = EMOTION.SAD;
+
+            break;
+
+        case EMOTION.ANGRY:
+
+            aiEmotion = EMOTION.NORMAL;
+
+            break;
+
+        case EMOTION.TIRED:
+
+            aiEmotion = EMOTION.NORMAL;
+
+            break;
+
+        default:
+
+            aiEmotion = EMOTION.NORMAL;
+
+    }
+
+}
+
+/*==================================================
+  Emotion Reply
+==================================================*/
+
+function emotionReply(){
+
+    switch(userEmotion){
+
+        case EMOTION.HAPPY:
+
+            return [
+
+                "それは良かったですね😊",
+
+                "私も嬉しいです！",
+
+                "その調子ですね✨"
+
+            ];
+
+        case EMOTION.SAD:
+
+            return [
+
+                "それは大変でしたね。",
+
+                "無理をしすぎないでくださいね。",
+
+                "話してくれてありがとうございます。"
+
+            ];
+
+        case EMOTION.ANGRY:
+
+            return [
+
+                "気持ちは分かります。",
+
+                "一度落ち着いて深呼吸してみましょう。",
+
+                "何があったのか教えてもらえますか？"
+
+            ];
+
+        case EMOTION.TIRED:
+
+            return [
+
+                "お疲れ様です。",
+
+                "今日はゆっくり休みましょう😊",
+
+                "温かい飲み物もおすすめです。"
+
+            ];
+
+        default:
+
+            return null;
+
+    }
+
+}
+
+/*==================================================
+  Random Emotion Reply
+==================================================*/
+
+function getEmotionResponse(){
+
+    const list = emotionReply();
+
+    if(!list){
+
+        return null;
+
+    }
+
+    return list[
+
+        random(
+
+            0,
+
+            list.length-1
+
+        )
+
+    ];
+
+}
+
+/*==================================================
+  Extend AI Engine
+==================================================*/
+
+const __emotionEngine = generateAdvancedReply;
+
+generateAdvancedReply = async function(message){
+
+    updateEmotion(message);
+
+    const empathy = getEmotionResponse();
+
+    if(empathy){
+
+        return applyCharacterStyle(empathy);
+
+    }
+
+    return await __emotionEngine(message);
+
+};
+
+/*==================================================
+  Debug
+==================================================*/
+
+console.log("Emotion System Loaded");
+
+/*==================================================
+  Part2-3B
+  Memory & Conversation Continuity
+==================================================*/
+
+/*==================================================
+  Short Memory
+==================================================*/
+
+const shortMemory = {
+
+    topics: [],
+
+    keywords: [],
+
+    max: 20
+
+};
+
+/*==================================================
+  Save Topic
+==================================================*/
+
+function rememberConversation(message){
+
+    const words = splitKeywords(message);
+
+    shortMemory.topics.unshift(message);
+
+    words.forEach(word=>{
+
+        if(word.length<2) return;
+
+        shortMemory.keywords.unshift(word);
+
+    });
+
+    shortMemory.topics =
+        shortMemory.topics.slice(0,shortMemory.max);
+
+    shortMemory.keywords =
+        [...new Set(shortMemory.keywords)]
+        .slice(0,50);
+
+}
+
+/*==================================================
+  Previous Topic
+==================================================*/
+
+function previousTopic(){
+
+    if(shortMemory.topics.length<2){
+
+        return null;
+
+    }
+
+    return shortMemory.topics[1];
+
+}
+
+/*==================================================
+  AI Question
+==================================================*/
+
+const AI_QUESTIONS=[
+
+"その話をもう少し詳しく教えてください😊",
+
+"どうしてそう思ったのですか？",
+
+"最近一番楽しかったことは何ですか？",
+
+"興味があることはありますか？",
+
+"好きな食べ物は何ですか？",
+
+"最近見た映画やアニメはありますか？",
+
+"今日はどんな一日でしたか？",
+
+"休日は何をして過ごすことが多いですか？"
+
+];
+
+function randomQuestion(){
+
+    return AI_QUESTIONS[
+
+        random(
+
+            0,
+
+            AI_QUESTIONS.length-1
+
+        )
+
+    ];
+
+}
+
+/*==================================================
+  Follow Up
+==================================================*/
+
+function followUpMessage(){
+
+    if(Math.random()<0.35){
+
+        return randomQuestion();
+
+    }
+
+    return "";
+
+}
+
+/*==================================================
+  Response Variation
+==================================================*/
+
+function varyResponse(text){
+
+    const prefix=[
+
+        "",
+
+        "なるほど😊\n",
+
+        "そうですね。\n",
+
+        "分かりました。\n"
+
+    ];
+
+    const suffix=[
+
+        "",
+
+        "\n何でも聞いてくださいね。",
+
+        "\n気軽に話してください😊",
+
+        "\n続きも楽しみにしています。"
+
+    ];
+
+    return
+
+        prefix[random(0,prefix.length-1)]
+
+        +
+
+        text
+
+        +
+
+        suffix[random(0,suffix.length-1)];
+
+}
+
+/*==================================================
+  Context Reply
+==================================================*/
+
+function contextReply(){
+
+    const topic=
+
+        previousTopic();
+
+    if(!topic){
+
+        return null;
+
+    }
+
+    if(Math.random()<0.25){
+
+        return
+
+        `そういえば、
+
+「${topic}」
+
+についても続きがあれば聞かせてください😊`;
+
+    }
+
+    return null;
+
+}
+
+/*==================================================
+  Extend Engine
+==================================================*/
+
+const __memoryEngine =
+
+generateAdvancedReply;
+
+generateAdvancedReply=
+
+async function(message){
+
+    rememberConversation(message);
+
+    let result=
+
+        await __memoryEngine(message);
+
+    if(result){
+
+        result=
+
+            varyResponse(result);
+
+        const next=
+
+            followUpMessage();
+
+        if(next){
+
+            result+=
+
+            "\n\n"+next;
+
+        }
+
+        return result;
+
+    }
+
+    const context=
+
+        contextReply();
+
+    if(context){
+
+        return context;
+
+    }
+
+    return
+
+    varyResponse(
+
+"まだ分からない内容ですが、一緒に考えてみましょう😊"
+
+    );
+
+};
+
+/*==================================================
+  Conversation Counter
+==================================================*/
+
+let conversationCount=0;
+
+const __sendMessage =
+
+sendMessage;
+
+sendMessage=
+
+async function(){
+
+    conversationCount++;
+
+    return await
+
+        __sendMessage();
+
+};
+
+/*==================================================
+  Auto Suggest
+==================================================*/
+
+setInterval(()=>{
+
+    if(
+
+        conversationCount>0 &&
+
+        conversationCount%10===0
+
+    ){
+
+        console.log(
+
+            "Conversation:",
+
+            conversationCount
+
+        );
+
+    }
+
+},5000);
+
+/*==================================================
+  Debug
+==================================================*/
+
+console.log(
+
+"Memory System Loaded"
+
+);
+
+/**************************************************
+ * End Part2
+ * Part3へ続く
+ **************************************************/
+/**
+ * よしくんGPT NEO
+ * speech.js
+ *
+ * 音声入力・音声読み上げシステム
+ */
+
+
+"use strict";
+
+
+
+
+
+/*
+==================================
+ 音声設定
+==================================
+*/
+
+
+const YOSHIKUN_SPEECH_CONFIG = {
+
+
+    language:
+        "ja-JP",
+
+
+    voiceRate:
+        1.0,
+
+
+    voicePitch:
+        1.0,
+
+
+    voiceVolume:
+        1.0,
+
+
+    autoSpeak:
+        true
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 音声認識準備
+==================================
+*/
+
+
+let recognition = null;
+
+
+let isListening = false;
+
+
+
+
+
+
+
+function initSpeechRecognition(){
+
+
+
+    const SpeechRecognition =
+
+        window.SpeechRecognition ||
+
+        window.webkitSpeechRecognition;
+
+
+
+    if(
+        !SpeechRecognition
+    ){
+
+        console.warn(
+
+            "音声入力は対応していません"
+
+        );
+
+
+        return false;
+
+    }
+
+
+
+
+    recognition =
+
+        new SpeechRecognition();
+
+
+
+
+    recognition.lang =
+
+        YOSHIKUN_SPEECH_CONFIG.language;
+
+
+
+    recognition.continuous = false;
+
+
+
+    recognition.interimResults = true;
+
+
+
+
+
+    recognition.onstart = function(){
+
+
+        isListening = true;
+
+
+        console.log(
+
+            "音声入力開始"
+
+        );
+
+
+    };
+
+
+
+
+
+
+
+    recognition.onend = function(){
+
+
+        isListening = false;
+
+
+        console.log(
+
+            "音声入力終了"
+
+        );
+
+
+    };
+
+
+
+
+
+
+    recognition.onerror = function(event){
+
+
+        console.error(
+
+            "音声認識エラー",
+
+            event.error
+
+        );
+
+
+    };
+
+
+
+
+
+    return true;
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 音声入力開始
+==================================
+*/
+
+
+function startSpeechInput(
+    callback
+){
+
+
+    if(
+        !recognition
+    ){
+
+        if(
+            !initSpeechRecognition()
+        ){
+
+            return false;
+
+        }
+
+    }
+
+
+
+
+
+    recognition.onresult =
+        function(event){
+
+
+
+            let text = "";
+
+
+
+            for(
+                let i =
+                event.resultIndex;
+
+                i <
+                event.results.length;
+
+                i++
+
+            ){
+
+
+                text +=
+
+                    event.results[i][0]
+                    .transcript;
+
+
+            }
+
+
+
+
+            if(callback){
+
+
+                callback(text);
+
+
+            }
+
+
+
+        };
+
+
+
+
+
+
+
+    recognition.start();
+
+
+    return true;
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声入力停止
+==================================
+*/
+
+
+function stopSpeechInput(){
+
+
+    if(
+        recognition &&
+        isListening
+    ){
+
+
+        recognition.stop();
+
+
+    }
+
+
+}
+
+/**
+ * よしくんGPT NEO
+ * speech.js Part2
+ *
+ * 音声読み上げシステム
+ */
+
+
+
+/*
+==================================
+ 音声読み上げ確認
+==================================
+*/
+
+
+function speechSupported(){
+
+
+    return (
+
+        "speechSynthesis"
+
+        in
+
+        window
+
+    );
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 日本語音声取得
+==================================
+*/
+
+
+function getJapaneseVoice(){
+
+
+    const voices =
+
+        speechSynthesis
+        .getVoices();
+
+
+
+    let voice =
+
+        voices.find(
+
+            v =>
+
+            v.lang === "ja-JP"
+
+        );
+
+
+
+    if(!voice){
+
+
+        voice =
+
+            voices.find(
+
+                v =>
+
+                v.lang
+                .startsWith(
+                    "ja"
+                )
+
+            );
+
+
+    }
+
+
+
+    return voice || null;
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声読み上げ
+==================================
+*/
+
+
+function speakText(
+    text
+){
+
+    
+    if(
+        !speechSupported()
+    ){
+
+        console.warn(
+
+            "音声読み上げ非対応"
+
+        );
+
+
+        return false;
+
+    }
+
+
+
+    stopSpeech();
+
+
+
+    const utterance =
+
+        new SpeechSynthesisUtterance(
+            text
+        );
+
+
+
+
+    utterance.lang =
+
+        YOSHIKUN_SPEECH_CONFIG.language;
+
+
+
+    utterance.rate =
+
+        YOSHIKUN_SPEECH_CONFIG.voiceRate;
+
+
+
+    utterance.pitch =
+
+        YOSHIKUN_SPEECH_CONFIG.voicePitch;
+
+
+
+    utterance.volume =
+
+        YOSHIKUN_SPEECH_CONFIG.voiceVolume;
+
+
+
+
+
+    const voice =
+
+        getJapaneseVoice();
+
+
+
+    if(voice){
+
+
+        utterance.voice = voice;
+
+
+    }
+
+
+
+
+
+
+    utterance.onstart =
+        function(){
+
+
+            console.log(
+
+                "読み上げ開始"
+
+            );
+
+
+        };
+
+
+
+
+
+    utterance.onend =
+        function(){
+
+
+            console.log(
+
+                "読み上げ終了"
+
+            );
+
+
+        };
+
+
+
+
+
+
+    speechSynthesis
+        .speak(
+            utterance
+        );
+
+
+
+    return true;
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 読み上げ停止
+==================================
+*/
+
+
+function stopSpeech(){
+
+
+    if(
+        speechSupported()
+    ){
+
+
+        speechSynthesis
+            .cancel();
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 音声設定変更
+==================================
+*/
+
+
+function setSpeechConfig(
+    config
+){
+
+    
+    Object.assign(
+
+        YOSHIKUN_SPEECH_CONFIG,
+
+        config
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声一覧取得
+==================================
+*/
+
+
+function getVoices(){
+
+
+    if(
+        !speechSupported()
+    ){
+
+        return [];
+
+    }
+
+
+
+    return (
+
+        speechSynthesis
+        .getVoices()
+
+    );
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声API
+ app.js接続用
+==================================
+*/
+
+
+const YoshikunSpeech = {
+
+
+    // 音声入力
+
+    startInput:
+        startSpeechInput,
+
+
+    stopInput:
+        stopSpeechInput,
+
+
+
+    // 読み上げ
+
+    speak:
+        speakText,
+
+
+    stop:
+        stopSpeech,
+
+
+
+    // 設定
+
+    config:
+    {
+
+
+        get:function(){
+
+            return (
+                YOSHIKUN_SPEECH_CONFIG
+            );
+
+        },
+
+
+        set:
+            setSpeechConfig
+
+    },
+
+
+
+    voices:
+        getVoices,
+
+
+    supported:
+        function(){
+
+
+            return {
+
+
+                input:
+                    !!(
+                    window.SpeechRecognition ||
+
+                    window.webkitSpeechRecognition
+                    ),
+
+
+
+                output:
+                    speechSupported()
+
+            };
+
+
+        }
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ Export
+==================================
+*/
+
+
+if(
+    typeof module !== "undefined"
+){
+
+    module.exports =
+        YoshikunSpeech;
+
+}
+
+/**
+ * よしくんGPT NEO
+ * storage.js
+ *
+ * データ保存管理システム
+ */
+
+
+"use strict";
+
+
+
+const YOSHIKUN_STORAGE = {
+
+
+    // 保存キー
+
+    keys: {
+
+        history:
+            "YOSHIKUN_CHAT_HISTORY",
+
+
+        memory:
+            "YOSHIKUN_USER_MEMORY",
+
+
+        settings:
+            "YOSHIKUN_SETTINGS",
+
+
+        version:
+            "YOSHIKUN_VERSION"
+
+    },
+
+
+
+    // 最大保存数
+
+    limit:100
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ LocalStorage確認
+==================================
+*/
+
+
+function storageAvailable(){
+
+
+    try{
+
+
+        const test =
+            "__storage_test__";
+
+
+        localStorage
+            .setItem(
+                test,
+                test
+            );
+
+
+        localStorage
+            .removeItem(
+                test
+            );
+
+
+        return true;
+
+
+    }catch(e){
+
+
+        return false;
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ データ保存
+==================================
+*/
+
+
+function saveData(
+    key,
+    data
+){
+
+
+    if(
+        !storageAvailable()
+    ){
+
+        return false;
+
+    }
+
+
+
+    try{
+
+
+        localStorage
+        .setItem(
+
+            key,
+
+            JSON.stringify(data)
+
+        );
+
+
+        return true;
+
+
+    }catch(e){
+
+
+        console.error(
+            "保存エラー",
+            e
+        );
+
+
+        return false;
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ データ取得
+==================================
+*/
+
+
+function loadData(
+    key,
+    defaultValue=null
+){
+
+
+    if(
+        !storageAvailable()
+    ){
+
+        return defaultValue;
+
+    }
+
+
+
+    try{
+
+
+        const data =
+            localStorage
+            .getItem(
+                key
+            );
+
+
+
+        if(
+            !data
+        ){
+
+            return defaultValue;
+
+        }
+
+
+
+        return JSON.parse(data);
+
+
+    }catch(e){
+
+
+        return defaultValue;
+
+    }
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 会話履歴保存
+==================================
+*/
+
+
+function saveChatHistory(
+    user,
+    ai
+){
+
+
+    let history =
+        loadData(
+
+            YOSHIKUN_STORAGE.keys.history,
+
+            []
+
+        );
+
+
+
+    history.push({
+
+
+        user:user,
+
+
+        ai:ai,
+
+
+        time:
+            new Date()
+            .toISOString()
+
+
+    });
+
+
+
+
+    // 100件制限
+
+    if(
+        history.length
+        >
+        YOSHIKUN_STORAGE.limit
+    ){
+
+        history =
+            history.slice(
+                -YOSHIKUN_STORAGE.limit
+            );
+
+    }
+
+
+
+    saveData(
+
+        YOSHIKUN_STORAGE.keys.history,
+
+        history
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 履歴取得
+==================================
+*/
+
+
+function getChatHistory(){
+
+
+    return loadData(
+
+        YOSHIKUN_STORAGE.keys.history,
+
+        []
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 履歴削除
+==================================
+*/
+
+
+function clearChatHistory(){
+
+
+    localStorage
+    .removeItem(
+
+        YOSHIKUN_STORAGE.keys.history
+
+    );
+
+
+}
+
+/**
+ * よしくんGPT NEO
+ * storage.js Part2
+ *
+ * 永続データ管理拡張
+ */
+
+
+
+/*
+==================================
+ ユーザー記憶保存
+==================================
+*/
+
+
+function saveUserMemory(
+    key,
+    value
+){
+
+    let memory =
+        loadData(
+
+            YOSHIKUN_STORAGE.keys.memory,
+
+            {}
+
+        );
+
+
+    memory[key] = {
+
+        value:value,
+
+        updated:
+            new Date()
+            .toISOString()
+
+    };
+
+
+
+    saveData(
+
+        YOSHIKUN_STORAGE.keys.memory,
+
+        memory
+
+    );
+
+
+}
+
+
+
+
+
+/*
+==================================
+ ユーザー記憶取得
+==================================
+*/
+
+
+function getUserMemory(
+    key
+){
+
+    const memory =
+        loadData(
+
+            YOSHIKUN_STORAGE.keys.memory,
+
+            {}
+
+        );
+
+
+    if(
+        memory[key]
+    ){
+
+        return memory[key].value;
+
+    }
+
+
+    return null;
+
+}
+
+
+
+
+
+
+/*
+==================================
+ 全ユーザー記憶取得
+==================================
+*/
+
+
+function getAllMemory(){
+
+
+    return loadData(
+
+        YOSHIKUN_STORAGE.keys.memory,
+
+        {}
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ ユーザー記憶削除
+==================================
+*/
+
+
+function removeUserMemory(
+    key
+){
+
+
+    let memory =
+        loadData(
+
+            YOSHIKUN_STORAGE.keys.memory,
+
+            {}
+
+        );
+
+
+
+    delete memory[key];
+
+
+
+    saveData(
+
+        YOSHIKUN_STORAGE.keys.memory,
+
+        memory
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 設定保存
+==================================
+*/
+
+
+function saveSettings(
+    settings
+){
+
+
+    return saveData(
+
+        YOSHIKUN_STORAGE.keys.settings,
+
+        settings
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 設定取得
+==================================
+*/
+
+
+function getSettings(){
+
+
+    return loadData(
+
+        YOSHIKUN_STORAGE.keys.settings,
+
+        {}
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ バックアップ作成
+==================================
+*/
+
+
+function createBackup(){
+
+
+    const backup = {
+
+
+        version:
+            "YOSHIKUN_GPT_NEO_1.0",
+
+
+
+        created:
+            new Date()
+            .toISOString(),
+
+
+
+        history:
+            getChatHistory(),
+
+
+
+        memory:
+            getAllMemory(),
+
+
+
+        settings:
+            getSettings()
+
+
+    };
+
+
+
+    return JSON.stringify(
+
+        backup,
+
+        null,
+
+        2
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 復元処理
+==================================
+*/
+
+
+function restoreBackup(
+    json
+){
+
+
+    try{
+
+
+        const data =
+            JSON.parse(json);
+
+
+
+        if(
+            data.history
+        ){
+
+            saveData(
+
+                YOSHIKUN_STORAGE.keys.history,
+
+                data.history
+
+            );
+
+        }
+
+
+
+        if(
+            data.memory
+        ){
+
+            saveData(
+
+                YOSHIKUN_STORAGE.keys.memory,
+
+                data.memory
+
+            );
+
+        }
+
+
+
+        if(
+            data.settings
+        ){
+
+            saveData(
+
+                YOSHIKUN_STORAGE.keys.settings,
+
+                data.settings
+
+            );
+
+        }
+
+
+
+        return true;
+
+
+
+    }catch(e){
+
+
+        console.error(
+            "復元失敗",
+            e
+        );
+
+
+        return false;
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 全データ削除
+==================================
+*/
+
+
+function clearAllStorage(){
+
+
+
+    Object.values(
+
+        YOSHIKUN_STORAGE.keys
+
+    )
+
+    .forEach(
+
+        key => {
+
+            localStorage
+            .removeItem(key);
+
+        }
+
+    );
+
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 容量確認
+==================================
+*/
+
+
+function getStorageInfo(){
+
+
+    let size = 0;
+
+
+
+    for(
+        let key
+        in localStorage
+    ){
+
+        if(
+            localStorage
+            .hasOwnProperty(key)
+        ){
+
+            size +=
+                localStorage[key]
+                .length;
+
+        }
+
+    }
+
+
+
+    return {
+
+
+        items:
+            localStorage.length,
+
+
+        size:
+            size,
+
+
+        sizeKB:
+            (
+                size / 1024
+            )
+            .toFixed(2)
+
+    };
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ app.js 接続 API
+==================================
+*/
+
+
+const YoshikunStorage = {
+
+
+    saveChat:
+        saveChatHistory,
+
+
+    getChat:
+        getChatHistory,
+
+
+    clearChat:
+        clearChatHistory,
+
+
+
+    memory:{
+
+
+        save:
+            saveUserMemory,
+
+
+        get:
+            getUserMemory,
+
+
+        all:
+            getAllMemory,
+
+
+        remove:
+            removeUserMemory
+
+
+    },
+
+
+
+    settings:{
+
+
+        save:
+            saveSettings,
+
+
+        get:
+            getSettings
+
+
+    },
+
+
+
+    backup:
+        createBackup,
+
+
+
+    restore:
+        restoreBackup,
+
+
+
+    clear:
+        clearAllStorage,
+
+
+
+    info:
+        getStorageInfo
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ Export
+==================================
+*/
+
+
+if(
+    typeof module !== "undefined"
+){
+
+    module.exports =
+        YoshikunStorage;
+
+}
+
+/**
+ * よしくんGPT NEO
+ * style.css
+ *
+ * メインデザイン
+ */
+
+
+/* =================================
+   基本設定
+================================= */
+
+
+*{
+
+    box-sizing:border-box;
+
+}
+
+
+
+html,
+body{
+
+
+    width:100%;
+
+    height:100%;
+
+    margin:0;
+
+    padding:0;
+
+
+    font-family:
+
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans JP",
+    sans-serif;
+
+
+
+    background:#0f172a;
+
+
+    color:#ffffff;
+
+
+    overflow:hidden;
+
+
+}
+
+
+
+
+
+body{
+
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   アプリ本体
+================================= */
+
+
+#app{
+
+
+    width:100%;
+
+
+    max-width:900px;
+
+
+    height:100vh;
+
+
+    display:flex;
+
+
+    flex-direction:column;
+
+
+
+    background:
+
+    linear-gradient(
+
+        180deg,
+
+        #111827,
+
+        #020617
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   ヘッダー
+================================= */
+
+
+.header{
+
+
+    height:70px;
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    padding:
+
+    10px 15px;
+
+
+
+    background:
+
+    rgba(
+
+        17,
+
+        24,
+
+        39,
+
+        0.95
+
+    );
+
+
+
+    border-bottom:
+
+    1px solid
+
+    rgba(
+
+        255,
+
+        255,
+
+        255,
+
+        .08
+
+    );
+
+
+
+}
+
+
+
+.logo{
+
+
+    width:45px;
+
+
+    height:45px;
+
+
+    border-radius:50%;
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    justify-content:center;
+
+
+
+    font-size:28px;
+
+
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #9333ea
+
+    );
+
+
+}
+
+
+
+
+
+
+
+.title{
+
+
+    flex:1;
+
+
+    margin-left:12px;
+
+
+}
+
+
+
+.title h1{
+
+
+    margin:0;
+
+
+    font-size:20px;
+
+
+}
+
+
+
+.title p{
+
+
+    margin:3px 0 0;
+
+
+    font-size:12px;
+
+
+    opacity:.7;
+
+
+}
+
+
+
+
+
+#menuButton{
+
+
+    border:0;
+
+
+    background:none;
+
+
+    color:white;
+
+
+    font-size:26px;
+
+
+    cursor:pointer;
+
+
+}
+
+
+
+
+
+
+
+/* =================================
+   チャットエリア
+================================= */
+
+
+.chat-area{
+
+
+    flex:1;
+
+
+    overflow-y:auto;
+
+
+    padding:20px;
+
+
+    scroll-behavior:smooth;
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   メッセージ
+================================= */
+
+
+.message{
+
+
+    max-width:80%;
+
+
+    padding:14px 18px;
+
+
+    margin-bottom:15px;
+
+
+    border-radius:18px;
+
+
+    line-height:1.6;
+
+
+    word-break:break-word;
+
+
+    animation:
+
+    messageIn .25s ease;
+
+
+}
+
+
+
+
+
+
+
+.message.ai{
+
+
+    background:
+
+    #1e293b;
+
+
+    margin-right:auto;
+
+
+    border-bottom-left-radius:5px;
+
+
+}
+
+
+
+
+
+.message.user{
+
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #7c3aed
+
+    );
+
+
+    margin-left:auto;
+
+
+    border-bottom-right-radius:5px;
+
+
+}
+
+
+
+
+
+
+
+
+
+@keyframes messageIn{
+
+
+    from{
+
+
+        opacity:0;
+
+
+        transform:
+
+        translateY(15px);
+
+
+    }
+
+
+
+    to{
+
+
+        opacity:1;
+
+
+        transform:
+
+        translateY(0);
+
+
+    }
+
+
+}
+
+/* =================================
+   入力エリア
+================================= */
+
+
+.input-area{
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    gap:10px;
+
+
+    padding:12px;
+
+
+    background:
+
+
+    rgba(
+
+        15,
+
+        23,
+
+        42,
+
+        .95
+
+    );
+
+
+    border-top:
+
+    1px solid
+
+    rgba(
+
+        255,
+
+        255,
+
+        255,
+
+        .08
+
+    );
+
+
+}
+
+
+
+
+
+
+
+#userInput{
+
+
+    flex:1;
+
+
+    height:45px;
+
+
+    padding:
+
+    0 15px;
+
+
+
+    border-radius:25px;
+
+
+    border:1px solid #334155;
+
+
+    outline:none;
+
+
+
+    background:#020617;
+
+
+    color:white;
+
+
+
+    font-size:16px;
+
+
+}
+
+
+
+#userInput::placeholder{
+
+
+    color:#94a3b8;
+
+
+}
+
+
+
+
+
+
+
+#sendButton{
+
+
+    height:45px;
+
+
+    padding:
+
+    0 22px;
+
+
+
+    border-radius:25px;
+
+
+    border:0;
+
+
+
+    background:
+
+    linear-gradient(
+
+        135deg,
+
+        #2563eb,
+
+        #9333ea
+
+    );
+
+
+
+    color:white;
+
+
+    font-weight:bold;
+
+
+    cursor:pointer;
+
+
+
+    transition:.2s;
+
+
+}
+
+
+
+#sendButton:hover{
+
+
+    transform:
+
+    scale(1.05);
+
+
+}
+
+
+
+
+
+
+
+#voiceButton{
+
+
+    width:45px;
+
+
+    height:45px;
+
+
+    border-radius:50%;
+
+
+    border:0;
+
+
+
+    background:#1e293b;
+
+
+    color:white;
+
+
+
+    font-size:20px;
+
+
+    cursor:pointer;
+
+
+
+    transition:.2s;
+
+
+}
+
+
+
+#voiceButton:hover{
+
+
+    background:#334155;
+
+
+    transform:
+
+    scale(1.1);
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   サイドメニュー
+================================= */
+
+
+.side-menu{
+
+
+    position:fixed;
+
+
+    top:0;
+
+
+    right:-320px;
+
+
+
+    width:300px;
+
+
+    height:100%;
+
+
+
+    background:#111827;
+
+
+
+    padding:25px;
+
+
+
+    z-index:1000;
+
+
+
+    transition:.3s;
+
+
+    box-shadow:
+
+    -5px 0 20px
+
+    rgba(
+
+        0,
+
+        0,
+
+        0,
+
+        .4
+
+    );
+
+
+}
+
+
+
+.side-menu.open{
+
+
+    right:0;
+
+
+}
+
+
+
+.side-menu h2{
+
+
+    margin-top:0;
+
+
+}
+
+
+
+
+
+
+
+.side-menu button,
+.file-label{
+
+
+    width:100%;
+
+
+    padding:14px;
+
+
+    margin-bottom:12px;
+
+
+    border-radius:12px;
+
+
+
+    border:1px solid #334155;
+
+
+
+    background:#1e293b;
+
+
+    color:white;
+
+
+    cursor:pointer;
+
+
+    display:block;
+
+
+    text-align:center;
+
+
+}
+
+
+
+.side-menu button:hover,
+.file-label:hover{
+
+
+    background:#334155;
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   オーバーレイ
+================================= */
+
+
+.overlay{
+
+
+    position:fixed;
+
+
+    inset:0;
+
+
+    background:
+
+    rgba(
+
+        0,
+
+        0,
+
+        0,
+
+        .5
+
+    );
+
+
+    opacity:0;
+
+
+    pointer-events:none;
+
+
+    transition:.3s;
+
+
+    z-index:900;
+
+
+}
+
+
+
+
+.overlay.show{
+
+
+    opacity:1;
+
+
+    pointer-events:auto;
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   タイピング表示
+================================= */
+
+
+.typing{
+
+
+    display:inline-block;
+
+
+    padding:12px 16px;
+
+
+    background:#1e293b;
+
+
+    border-radius:15px;
+
+
+
+    color:#cbd5e1;
+
+
+    animation:
+
+    pulse 1.2s infinite;
+
+
+}
+
+
+
+@keyframes pulse{
+
+
+    0%{
+
+
+        opacity:.5;
+
+
+    }
+
+
+
+    50%{
+
+
+        opacity:1;
+
+
+    }
+
+
+
+    100%{
+
+
+        opacity:.5;
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   ローディング
+================================= */
+
+
+.loading{
+
+
+    position:fixed;
+
+
+    inset:0;
+
+
+    display:none;
+
+
+    flex-direction:column;
+
+
+    justify-content:center;
+
+
+    align-items:center;
+
+
+
+    background:#020617;
+
+
+    z-index:2000;
+
+
+}
+
+
+
+.loader{
+
+
+    width:50px;
+
+
+    height:50px;
+
+
+
+    border-radius:50%;
+
+
+    border:5px solid #334155;
+
+
+    border-top-color:#2563eb;
+
+
+
+    animation:
+
+    rotate 1s linear infinite;
+
+
+}
+
+
+
+@keyframes rotate{
+
+
+    to{
+
+
+        transform:
+
+        rotate(360deg);
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   コード表示
+================================= */
+
+
+code{
+
+
+    display:block;
+
+
+    padding:12px;
+
+
+    margin-top:8px;
+
+
+    border-radius:8px;
+
+
+
+    background:#020617;
+
+
+    color:#93c5fd;
+
+
+    overflow-x:auto;
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =================================
+   スマホ対応
+================================= */
+
+
+@media(max-width:600px){
+
+
+
+    .title h1{
+
+
+        font-size:17px;
+
+
+    }
+
+
+
+    .message{
+
+
+        max-width:90%;
+
+
+        font-size:14px;
+
+
+    }
+
+
+
+
+    #sendButton{
+
+
+        padding:
+
+        0 15px;
+
+
+    }
+
+
+
+    .chat-area{
+
+
+        padding:12px;
+
+
+    }
+
+
+
+}
+
+
+
+
+
+/* =================================
+   iPhone対応
+================================= */
+
+
+@supports(
+    padding:
+    env(safe-area-inset-bottom)
+){
+
+
+
+    .input-area{
+
+
+        padding-bottom:
+
+        calc(
+
+            12px
+
+            +
+
+            env(
+                safe-area-inset-bottom
+            )
+
+        );
+
+
+    }
+
+
+}
+/**
+ * よしくんGPT NEO
+ * sw.js
+ *
+ * Service Worker
+ *
+ * PWAオフライン管理
+ */
+
+
+"use strict";
+
+
+
+
+
+/*
+==================================
+ キャッシュ設定
+==================================
+*/
+
+
+const CACHE_NAME =
+
+    "yoshikun-gpt-neo-v1.0.0";
+
+
+
+
+
+const APP_FILES = [
+
+
+    "./",
+
+    "./index.html",
+
+    "./style.css",
+
+    "./manifest.json",
+
+
+    "./js/config.js",
+
+    "./js/knowledge.js",
+
+    "./js/storage.js",
+
+    "./js/speech.js",
+
+    "./js/app.js",
+
+    "./js/bootstrap.js"
+
+
+];
+
+
+
+
+
+
+
+
+/*
+==================================
+ インストール
+==================================
+*/
+
+
+self.addEventListener(
+
+    "install",
+
+    event => {
+
+
+        console.log(
+
+            "YoshikunGPT Service Worker Install"
+
+        );
+
+
+
+        event.waitUntil(
+
+
+            caches.open(
+
+                CACHE_NAME
+
+            )
+
+            .then(
+
+                cache => {
+
+
+                    return cache.addAll(
+
+                        APP_FILES
+
+                    );
+
+
+                }
+
+            )
+
+
+        );
+
+
+
+        self.skipWaiting();
+
+
+    }
+
+);
+
+
+
+
+
+
+
+
+/*
+==================================
+ 有効化
+==================================
+*/
+
+
+self.addEventListener(
+
+    "activate",
+
+    event => {
+
+
+        console.log(
+
+            "Service Worker Activate"
+
+        );
+
+
+
+        event.waitUntil(
+
+
+
+            caches.keys()
+
+            .then(
+
+                keys => {
+
+
+                    return Promise.all(
+
+
+                        keys.map(
+
+                            key => {
+
+
+
+                                if(
+
+                                    key !== CACHE_NAME
+
+                                ){
+
+
+                                    return caches.delete(
+
+                                        key
+
+                                    );
+
+
+                                }
+
+
+
+                            }
+
+
+                        )
+
+
+                    );
+
+
+                }
+
+
+            )
+
+
+        );
+
+
+
+        self.clients.claim();
+
+
+    }
+
+);
+
+
+
+
+
+
+
+
+/*
+==================================
+ フェッチ制御
+==================================
+*/
+
+
+self.addEventListener(
+
+    "fetch",
+
+    event => {
+
+
+
+        const request =
+
+            event.request;
+
+
+
+
+        event.respondWith(
+
+
+
+            caches.match(
+
+                request
+
+            )
+
+            .then(
+
+                cached => {
+
+
+
+                    if(cached){
+
+
+                        return cached;
+
+
+                    }
+
+
+
+
+                    return fetch(
+
+                        request
+
+                    )
+
+                    .then(
+
+                        response => {
+
+
+
+                            const clone =
+
+                                response.clone();
+
+
+
+
+
+                            caches.open(
+
+                                CACHE_NAME
+
+                            )
+
+                            .then(
+
+                                cache => {
+
+
+                                    cache.put(
+
+                                        request,
+
+                                        clone
+
+                                    );
+
+
+                                }
+
+                            );
+
+
+
+
+                            return response;
+
+
+
+                        }
+
+
+                    );
+
+
+
+                }
+
+
+            )
+
+
+        );
+
+
+
+    }
+
+);
+
+
+
+
+
+
+
+
+/*
+==================================
+ 更新通知
+==================================
+*/
+
+
+self.addEventListener(
+
+    "message",
+
+    event => {
+
+
+
+        if(
+
+            event.data ===
+
+            "SKIP_WAITING"
+
+        ){
+
+
+            self.skipWaiting();
+
+
+        }
+
+
+
+    }
+
+);
+/**
+ * よしくんGPT NEO
+ * app.js
+ *
+ * メインアプリ制御
+ */
+
+
+"use strict";
+
+
+
+
+
+/*
+==================================
+ アプリ状態
+==================================
+*/
+
+
+const YOSHIKUN_APP = {
+
+
+    version:
+        "1.0.0",
+
+
+    initialized:false,
+
+
+    user:"guest",
+
+
+    messages:[],
+
+
+    settings:{},
+
+
+    isProcessing:false
+
+
+};
+
+
+
+
+
+
+
+
+/*
+==================================
+ 起動処理
+==================================
+*/
+
+
+function initApp(){
+
+
+
+    console.log(
+
+        "よしくんGPT NEO 起動開始"
+
+    );
+
+
+
+
+
+    try{
+
+
+        loadAppSettings();
+
+
+
+        loadHistory();
+
+
+
+        setupEvents();
+
+
+
+        initSpeech();
+
+
+
+        YOSHIKUN_APP.initialized = true;
+
+
+
+        showWelcome();
+
+
+
+        console.log(
+
+            "起動完了"
+
+        );
+
+
+
+    }catch(error){
+
+
+
+        handleError(error);
+
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 設定読み込み
+==================================
+*/
+
+
+function loadAppSettings(){
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YOSHIKUN_APP.settings =
+
+            YoshikunStorage
+            .settings
+            .get();
+
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 履歴読み込み
+==================================
+*/
+
+
+function loadHistory(){
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YOSHIKUN_APP.messages =
+
+            YoshikunStorage
+            .getChat();
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ イベント設定
+==================================
+*/
+
+
+function setupEvents(){
+
+
+
+    const sendButton =
+
+        document
+        .getElementById(
+            "sendButton"
+        );
+
+
+
+    const input =
+
+        document
+        .getElementById(
+            "userInput"
+        );
+
+
+
+
+    if(sendButton){
+
+
+        sendButton
+        .addEventListener(
+
+            "click",
+
+            sendMessage
+
+        );
+
+
+    }
+
+
+
+
+
+    if(input){
+
+
+        input
+        .addEventListener(
+
+            "keydown",
+
+            function(e){
+
+
+
+                if(
+                    e.key ===
+                    "Enter"
+                ){
+
+
+                    sendMessage();
+
+
+                }
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声初期化
+==================================
+*/
+
+
+function initSpeech(){
+
+
+
+    if(
+        typeof YoshikunSpeech
+        !==
+        "undefined"
+    ){
+
+
+        console.log(
+
+            "音声機能準備完了"
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 初期メッセージ
+==================================
+*/
+
+
+function showWelcome(){
+
+
+
+    addAIMessage(
+
+        YOSHIKUN_CONFIG
+        .app
+        .welcomeMessage
+
+    );
+
+
+}
+
+/**
+ * よしくんGPT NEO
+ * app.js Part2
+ *
+ * チャット制御システム
+ */
+
+
+
+
+
+/*
+==================================
+ メッセージ送信
+==================================
+*/
+
+
+function sendMessage(){
+
+
+    if(
+        YOSHIKUN_APP.isProcessing
+    ){
+
+        return;
+
+    }
+
+
+
+    const input =
+
+        document
+        .getElementById(
+            "userInput"
+        );
+
+
+
+    if(
+        !input
+    ){
+
+        return;
+
+    }
+
+
+
+
+    const text =
+
+        input
+        .value
+        .trim();
+
+
+
+
+
+    if(
+        text === ""
+    ){
+
+        return;
+
+    }
+
+
+
+
+
+    input.value = "";
+
+
+
+
+    addUserMessage(text);
+
+
+
+
+    processAI(text);
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ AI処理
+==================================
+*/
+
+
+async function processAI(
+    text
+){
+
+
+
+    YOSHIKUN_APP.isProcessing = true;
+
+
+
+    showTyping();
+
+
+
+
+    try{
+
+
+        let answer = "";
+
+
+
+        /*
+        AIエンジン呼び出し
+        */
+
+
+        if(
+            typeof YoshikunAI
+            !==
+            "undefined"
+        ){
+
+
+
+            answer =
+
+                YoshikunAI
+                .ask(
+                    text
+                );
+
+
+
+        }else{
+
+
+            answer =
+
+                "AIエンジンが読み込まれていません。";
+
+
+        }
+
+
+
+
+
+
+
+        hideTyping();
+
+
+
+
+        addAIMessage(answer);
+
+
+
+
+        saveConversation(
+
+            text,
+
+            answer
+
+        );
+
+
+
+
+
+
+        /*
+        音声読み上げ
+        */
+
+
+        if(
+            typeof YoshikunSpeech
+            !==
+            "undefined"
+        ){
+
+
+            if(
+                YOSHIKUN_CONFIG
+                .speech
+                .textToSpeech
+            ){
+
+
+                YoshikunSpeech
+                .speak(
+                    answer
+                );
+
+
+            }
+
+
+        }
+
+
+
+
+
+
+    }catch(error){
+
+
+
+        hideTyping();
+
+
+
+        addAIMessage(
+
+            "エラーが発生しました。もう一度試してください。"
+
+        );
+
+
+
+        handleError(error);
+
+
+
+    }
+
+
+
+
+
+    YOSHIKUN_APP.isProcessing = false;
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ 会話保存
+==================================
+*/
+
+
+function saveConversation(
+    user,
+    ai
+){
+
+
+
+    YOSHIKUN_APP.messages
+    .push({
+
+
+        user:user,
+
+
+        ai:ai,
+
+
+        time:
+
+            new Date()
+            .toISOString()
+
+
+    });
+
+
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YoshikunStorage
+        .saveChat(
+
+            user,
+
+            ai
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ ユーザーメッセージ表示
+==================================
+*/
+
+
+function addUserMessage(
+    text
+){
+
+
+    addMessage(
+
+        text,
+
+        "user"
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ AIメッセージ表示
+==================================
+*/
+
+
+function addAIMessage(
+    text
+){
+
+
+    addMessage(
+
+        text,
+
+        "ai"
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 画面表示
+==================================
+*/
+
+
+function addMessage(
+    text,
+    type
+){
+
+
+
+    const chatArea =
+
+        document
+        .getElementById(
+            "chatArea"
+        );
+
+
+
+
+    if(
+        !chatArea
+    ){
+
+        return;
+
+    }
+
+
+
+
+
+
+    const message =
+
+        document
+        .createElement(
+            "div"
+        );
+
+
+
+
+    message.className =
+
+        "message " +
+
+        type;
+
+
+
+
+
+
+    message.textContent =
+        text;
+
+
+
+
+
+
+    chatArea
+    .appendChild(
+        message
+    );
+
+
+
+
+
+    chatArea.scrollTop =
+
+        chatArea.scrollHeight;
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ タイピング表示
+==================================
+*/
+
+
+function showTyping(){
+
+
+
+    const area =
+
+        document
+        .getElementById(
+            "chatArea"
+        );
+
+
+
+    if(!area)
+        return;
+
+
+
+
+
+    const typing =
+
+        document
+        .createElement(
+            "div"
+        );
+
+
+
+    typing.id =
+        "typingIndicator";
+
+
+
+    typing.className =
+        "typing";
+
+
+
+    typing.textContent =
+        "よしくんGPT NEO が考え中... 🤔";
+
+
+
+    area.appendChild(
+        typing
+    );
+
+
+}
+
+
+
+
+
+
+function hideTyping(){
+
+
+
+    const typing =
+
+        document
+        .getElementById(
+            "typingIndicator"
+        );
+
+
+
+    if(typing){
+
+
+        typing.remove();
+
+
+    }
+
+
+}
+
+/**
+ * よしくんGPT NEO
+ * app.js Part3
+ *
+ * 拡張アプリ管理
+ */
+
+
+
+
+
+/*
+==================================
+ 音声入力
+==================================
+*/
+
+
+function startVoiceInput(){
+
+
+
+    if(
+        typeof YoshikunSpeech
+        ===
+        "undefined"
+    ){
+
+        addAIMessage(
+
+            "音声機能が利用できません。"
+
+        );
+
+
+        return;
+
+    }
+
+
+
+
+
+
+    YoshikunSpeech
+    .startInput(
+
+        function(text){
+
+
+
+            const input =
+
+                document
+                .getElementById(
+                    "userInput"
+                );
+
+
+
+            if(input){
+
+
+                input.value =
+                    text;
+
+
+                sendMessage();
+
+
+            }
+
+
+
+        }
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ 音声停止
+==================================
+*/
+
+
+function stopVoiceInput(){
+
+
+
+    if(
+        typeof YoshikunSpeech
+        !==
+        "undefined"
+    ){
+
+
+        YoshikunSpeech
+        .stopInput();
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 履歴表示
+==================================
+*/
+
+
+function displayHistory(){
+
+
+
+    const history =
+
+        YOSHIKUN_APP.messages;
+
+
+
+    const area =
+
+        document
+        .getElementById(
+            "chatArea"
+        );
+
+
+
+    if(
+        !area
+    ){
+
+        return;
+
+    }
+
+
+
+
+    area.innerHTML = "";
+
+
+
+
+
+    history
+    .forEach(
+
+        item => {
+
+
+
+            addUserMessage(
+
+                item.user
+
+            );
+
+
+
+            addAIMessage(
+
+                item.ai
+
+            );
+
+
+        }
+
+    );
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 履歴削除
+==================================
+*/
+
+
+function clearHistory(){
+
+
+
+    YOSHIKUN_APP.messages = [];
+
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YoshikunStorage
+        .clearChat();
+
+
+    }
+
+
+
+
+
+    const area =
+
+        document
+        .getElementById(
+            "chatArea"
+        );
+
+
+
+    if(area){
+
+
+        area.innerHTML = "";
+
+
+    }
+
+
+
+    showWelcome();
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ ユーザー記憶保存
+==================================
+*/
+
+
+function remember(
+    key,
+    value
+){
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YoshikunStorage
+        .memory
+        .save(
+
+            key,
+
+            value
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ ユーザー記憶取得
+==================================
+*/
+
+
+function recall(
+    key
+){
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        return (
+
+            YoshikunStorage
+            .memory
+            .get(
+                key
+            )
+
+        );
+
+
+    }
+
+
+
+    return null;
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ バックアップ
+==================================
+*/
+
+
+function exportBackup(){
+
+
+
+    if(
+        typeof YoshikunStorage
+        ===
+        "undefined"
+    ){
+
+        return null;
+
+    }
+
+
+
+    const data =
+
+        YoshikunStorage
+        .backup();
+
+
+
+    const blob =
+
+        new Blob(
+
+            [
+                data
+            ],
+
+            {
+                type:
+                "application/json"
+            }
+
+        );
+
+
+
+    const url =
+
+        URL
+        .createObjectURL(
+            blob
+        );
+
+
+
+
+    const a =
+
+        document
+        .createElement(
+            "a"
+        );
+
+
+
+    a.href = url;
+
+
+
+    a.download =
+
+        "yoshikunGPT_backup.json";
+
+
+
+    a.click();
+
+
+
+    URL
+    .revokeObjectURL(
+        url
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ 復元
+==================================
+*/
+
+
+function importBackup(
+    file
+){
+
+
+
+    const reader =
+
+        new FileReader();
+
+
+
+
+    reader.onload =
+
+        function(e){
+
+
+
+            if(
+                typeof YoshikunStorage
+                !==
+                "undefined"
+            ){
+
+
+                const result =
+
+                    YoshikunStorage
+                    .restore(
+
+                        e.target.result
+
+                    );
+
+
+
+                if(result){
+
+
+                    location.reload();
+
+
+                }
+
+
+            }
+
+
+
+        };
+
+
+
+
+    reader.readAsText(file);
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ PWA準備
+==================================
+*/
+
+
+function initPWA(){
+
+
+
+    if(
+        "serviceWorker"
+        in
+        navigator
+    ){
+
+
+
+        navigator
+        .serviceWorker
+        .register(
+
+            "sw.js"
+
+        )
+
+        .then(
+
+            function(){
+
+
+                console.log(
+
+                    "Service Worker登録完了"
+
+                );
+
+
+            }
+
+        )
+
+        .catch(
+
+            function(error){
+
+
+                console.error(
+                    error
+                );
+
+
+            }
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ エラー処理
+==================================
+*/
+
+
+function handleError(
+    error
+){
+
+
+
+    console.error(
+
+        "YoshikunGPT Error:",
+
+        error
+
+    );
+
+
+    if(
+        YOSHIKUN_CONFIG
+        &&
+        YOSHIKUN_CONFIG
+        .debug
+        .enabled
+    ){
+
+
+        console.log(error);
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 起動
+==================================
+*/
+
+
+document
+.addEventListener(
+
+    "DOMContentLoaded",
+
+    function(){
+
+
+        initPWA();
+
+
+        initApp();
+
+
+
+    }
+
+);
+
+/**
+ * よしくんGPT NEO
+ * app.js Part4
+ *
+ * 最終統合システム
+ */
+
+
+
+
+
+/*
+==================================
+ Markdown簡易変換
+==================================
+*/
+
+
+function renderMarkdown(text){
+
+
+    if(
+        !text
+    ){
+
+        return "";
+
+    }
+
+
+
+    let html =
+        text;
+
+
+
+    // 太字
+
+    html =
+        html.replace(
+
+            /\*\*(.*?)\*\*/g,
+
+            "<strong>$1</strong>"
+
+        );
+
+
+
+    // 改行
+
+    html =
+        html.replace(
+
+            /\n/g,
+
+            "<br>"
+
+        );
+
+
+
+    // コード
+
+    html =
+        html.replace(
+
+            /`(.*?)`/g,
+
+            "<code>$1</code>"
+
+        );
+
+
+
+    return html;
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 高機能メッセージ表示
+==================================
+*/
+
+
+function addRichMessage(
+    text,
+    type
+){
+
+
+
+    const chatArea =
+
+        document
+        .getElementById(
+            "chatArea"
+        );
+
+
+
+    if(
+        !chatArea
+    ){
+
+        return;
+
+    }
+
+
+
+
+    const div =
+
+        document
+        .createElement(
+            "div"
+        );
+
+
+
+    div.className =
+
+        "message " +
+
+        type;
+
+
+
+    div.innerHTML =
+
+        renderMarkdown(
+            text
+        );
+
+
+
+
+    chatArea
+    .appendChild(
+        div
+    );
+
+
+
+    chatArea.scrollTop =
+
+        chatArea.scrollHeight;
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ ファイル読み込み
+==================================
+*/
+
+
+function readFile(
+    file,
+    callback
+){
+
+
+
+    const reader =
+
+        new FileReader();
+
+
+
+
+    reader.onload =
+
+        function(e){
+
+
+            if(callback){
+
+
+                callback(
+
+                    e.target.result
+
+                );
+
+
+            }
+
+
+        };
+
+
+
+    reader.readAsText(file);
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ ファイル解析
+==================================
+*/
+
+
+function analyzeFile(
+    content
+){
+
+
+
+    return (
+
+        "ファイル内容を解析しました。\n\n" +
+
+        "文字数: "
+
+        +
+
+        content.length
+
+        +
+
+        "文字"
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+/*
+==================================
+ 設定変更
+==================================
+*/
+
+
+function updateSetting(
+    key,
+    value
+){
+
+
+
+    YOSHIKUN_APP
+    .settings[key]
+        =
+        value;
+
+
+
+    if(
+        typeof YoshikunStorage
+        !==
+        "undefined"
+    ){
+
+
+        YoshikunStorage
+        .settings
+        .save(
+
+            YOSHIKUN_APP.settings
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ 現在設定取得
+==================================
+*/
+
+
+function getAppSettings(){
+
+
+    return (
+
+        YOSHIKUN_APP.settings
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==================================
+ アプリ情報
+==================================
+*/
+
+
+function getAppInfo(){
+
+
+
+    return {
+
+
+        name:
+
+            YOSHIKUN_CONFIG
+            .app
+            .name,
+
+
+
+        version:
+
+            YOSHIKUN_CONFIG
+            .app
+            .version,
+
+
+
+        mode:
+
+            YOSHIKUN_CONFIG
+            .app
+            .mode
+
+
+    };
+
+
+}
+
+
+
+
+
+
+
+/*
+==================================
+ よしくんGPT API
+==================================
+*/
+
+
+const YoshikunGPT = {
+
+
+    chat:function(
+        message
+    ){
+
+        return YoshikunAI
+        .ask(
+            message
+        );
+
+    },
+
+
+
+    speak:function(
+        text
+    ){
+
+        if(
+            typeof YoshikunSpeech
+            !==
+            "undefined"
+        ){
+
+            YoshikunSpeech
+            .speak(
+                text
+            );
+
+        }
+
+    },
+
+
+
+    remember:function(
+        key,
+        value
+    ){
+
+        remember(
+            key,
+            value
+        );
+
+    },
+
+
+
+    recall:function(
+        key
+    ){
+
+        return recall(
+            key
+        );
+
+    },
+
+
+
+    history:function(){
+
+        return (
+
+            YOSHIKUN_APP.messages
+
+        );
+
+    },
+
+
+
+    info:function(){
+
+        return getAppInfo();
+
+    }
+
+
+};
+
+
+
+
+
+
+
+/*
+==================================
+ 起動完了イベント
+==================================
+*/
+
+
+window
+.addEventListener(
+
+    "load",
+
+    function(){
+
+
+        console.log(
+
+            "🚀 よしくんGPT NEO 起動完了"
+
+        );
+
+
+    }
+
+);
