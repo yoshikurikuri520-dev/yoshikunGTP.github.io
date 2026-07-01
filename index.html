@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+viewport-fit=cover">
+
+
+<title>
+よしくんGPT NEO
+</title>
+
+
+<!-- PWA設定 -->
+
+<link rel="manifest"
+href="manifest.json">
+
+
+<meta name="theme-color"
+content="#111827">
+
+
+<meta name="apple-mobile-web-app-capable"
+content="yes">
+
+
+<meta name="apple-mobile-web-app-status-bar-style"
+content="black">
+
+
+<meta name="apple-mobile-web-app-title"
+content="よしくんGPT NEO">
+
+
+
+<!-- アイコン -->
+
+<link rel="apple-touch-icon"
+href="icon.png">
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet"
+href="style.css">
+
+
+
+</head>
+
+
+
+
+
+<body>
+
+
+
+<!-- =========================
+     アプリ全体
+========================= -->
+
+
+<div id="app">
+
+
+
+
+
+<!-- =========================
+     ヘッダー
+========================= -->
+
+
+<header class="header">
+
+
+<div class="logo">
+
+🤖
+
+</div>
+
+
+<div class="title">
+
+
+<h1>
+よしくんGPT NEO
+</h1>
+
+
+<p>
+AI Assistant System
+</p>
+
+
+</div>
+
+
+
+<button
+id="menuButton">
+
+☰
+
+</button>
+
+
+
+</header>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     チャットエリア
+========================= -->
+
+
+<main
+id="chatArea"
+class="chat-area">
+
+
+
+<!-- AI初期表示 -->
+
+<div class="message ai">
+
+
+こんにちは😊
+
+私は
+「よしくんGPT NEO」です。
+
+質問・相談・アイデア作成など
+何でも聞いてください。
+
+
+</div>
+
+
+
+</main>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     入力エリア
+========================= -->
+
+
+<footer class="input-area">
+
+
+
+<button
+id="voiceButton"
+title="音声入力">
+
+
+🎤
+
+
+</button>
+
+
+
+
+
+
+<input
+id="userInput"
+
+type="text"
+
+placeholder="メッセージを入力してください..."
+
+autocomplete="off">
+
+
+
+
+
+
+<button
+id="sendButton">
+
+
+送信
+
+
+</button>
+
+
+
+</footer>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     ファイル入力
+========================= -->
+
+
+<input
+
+type="file"
+
+id="fileInput"
+
+hidden>
+
+
+
+
+
+<!-- =========================
+     サイドメニュー
+========================= -->
+
+
+<div
+id="sideMenu"
+class="side-menu">
+
+
+
+<h2>
+設定
+</h2>
+
+
+
+
+<button
+id="clearHistory">
+
+
+🗑 履歴削除
+
+
+</button>
+
+
+
+
+
+<button
+id="backupButton">
+
+
+💾 バックアップ
+
+
+</button>
+
+
+
+
+
+<label
+class="file-label">
+
+
+📂 ファイル解析
+
+
+<input
+
+type="file"
+
+id="fileLoader"
+
+hidden>
+
+
+</label>
+
+
+
+
+
+
+<button
+id="installButton">
+
+
+📱 アプリとして追加
+
+
+</button>
+
+
+
+
+
+<button
+id="closeMenu">
+
+
+閉じる
+
+
+</button>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     オーバーレイ
+========================= -->
+
+
+<div
+
+id="overlay"
+
+class="overlay">
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     ローディング表示
+========================= -->
+
+
+<div
+
+id="loading"
+
+class="loading">
+
+
+<div class="loader">
+
+
+</div>
+
+
+
+<p>
+
+よしくんGPT NEO 起動中...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- =========================
+     JavaScript
+========================= -->
+
+
+
+<script src="js/config.js"></script>
+
+
+<script src="js/knowledge.js"></script>
+
+
+<script src="js/storage.js"></script>
+
+
+<script src="js/speech.js"></script>
+
+
+<script src="js/app.js"></script>
+
+
+<script src="js/bootstrap.js"></script>
+
+
+
+
+
+
+
+<script>
+
+
+/*
+==================================
+ 簡易UIイベント
+==================================
+*/
+
+
+
+const menuButton =
+
+document.getElementById(
+"menuButton"
+);
+
+
+
+const sideMenu =
+
+document.getElementById(
+"sideMenu"
+);
+
+
+
+const overlay =
+
+document.getElementById(
+"overlay"
+);
+
+
+
+if(menuButton){
+
+
+menuButton.onclick=function(){
+
+
+sideMenu.classList.add(
+"open"
+);
+
+
+overlay.classList.add(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+if(overlay){
+
+
+overlay.onclick=function(){
+
+
+sideMenu.classList.remove(
+"open"
+);
+
+
+overlay.classList.remove(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+const closeMenu =
+
+document.getElementById(
+"closeMenu"
+);
+
+
+
+if(closeMenu){
+
+
+closeMenu.onclick=function(){
+
+
+sideMenu.classList.remove(
+"open"
+);
+
+
+overlay.classList.remove(
+"show"
+);
+
+
+};
+
+
+}
+
+
+
+
+
+
+
+/*
+==============================
+ 音声ボタン
+==============================
+*/
+
+
+const voiceButton =
+
+document.getElementById(
+"voiceButton"
+);
+
+
+
+if(voiceButton){
+
+
+voiceButton.onclick=function(){
+
+
+
+if(
+typeof startVoiceInput
+!=="undefined"
+){
+
+
+startVoiceInput();
+
+
+}
+
+
+
+};
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==============================
+ ファイル読み込み
+==============================
+*/
+
+
+const fileLoader =
+
+document.getElementById(
+"fileLoader"
+);
+
+
+
+if(fileLoader){
+
+
+fileLoader.onchange=function(e){
+
+
+
+const file =
+e.target.files[0];
+
+
+
+if(
+file &&
+typeof readFile
+!=="undefined"
+){
+
+
+
+readFile(
+
+file,
+
+function(text){
+
+
+const result =
+
+analyzeFile(
+text
+);
+
+
+
+addAIMessage(
+result
+);
+
+
+
+}
+
+);
+
+
+
+}
+
+
+
+};
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==============================
+ PWAインストール
+==============================
+*/
+
+
+let deferredPrompt;
+
+
+
+window.addEventListener(
+
+"beforeinstallprompt",
+
+function(e){
+
+
+e.preventDefault();
+
+
+deferredPrompt=e;
+
+
+
+const btn =
+
+document.getElementById(
+"installButton"
+);
+
+
+
+if(btn){
+
+
+btn.style.display=
+"block";
+
+
+}
+
+
+
+}
+
+);
+
+
+
+
+
+
+
+const installButton =
+
+document.getElementById(
+"installButton"
+);
+
+
+
+if(installButton){
+
+
+installButton.onclick=
+async function(){
+
+
+
+if(deferredPrompt){
+
+
+deferredPrompt.prompt();
+
+
+
+deferredPrompt=null;
+
+
+}
+
+
+
+};
+
+
+
+}
+
+
+
+
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
+

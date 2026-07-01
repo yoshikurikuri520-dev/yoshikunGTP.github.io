@@ -1,20 +1,70 @@
 {
-  "name":"よしくんGPT",
-  "short_name":"よしくんGPT",
-  "display":"standalone",
-  "background_color":"#ffffff",
-  "theme_color":"#ff7eb6",
-  "start_url":"./index.html",
-  "icons":[
+  "name": "よしくんGPT NEO",
+
+  "short_name": "よしくんGPT",
+
+  "description":
+    "AIチャットアシスタント よしくんGPT NEO PWA版",
+
+  "lang": "ja-JP",
+
+  "start_url": "./index.html",
+
+  "scope": "./",
+
+
+  "display": "standalone",
+
+
+  "orientation": "portrait",
+
+
+  "background_color": "#020617",
+
+
+  "theme_color": "#2563eb",
+
+
+
+  "categories": [
+
+    "productivity",
+
+    "education",
+
+    "utilities"
+
+  ],
+
+
+
+  "icons": [
+
     {
-      "src":"icon-192.png",
-      "sizes":"192x192",
-      "type":"image/png"
+
+      "src": "icon-192.png",
+
+      "sizes": "192x192",
+
+      "type": "image/png",
+
+      "purpose": "any maskable"
+
     },
+
+
     {
-      "src":"icon-512.png",
-      "sizes":"512x512",
-      "type":"image/png"
+
+      "src": "icon-512.png",
+
+      "sizes": "512x512",
+
+      "type": "image/png",
+
+      "purpose": "any maskable"
+
     }
+
   ]
+
 }
